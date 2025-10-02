@@ -189,12 +189,12 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
               console.log('💬 API Comments response:', commentsData);
               
               if (commentsData.status === '1' && commentsData.data && Array.isArray(commentsData.data)) {
-                const apiComments: Comment[] = commentsData.data.map((note: any, index: number) => ({
-                  id: `api-note-${note.id || index}`,
-                  author: note.created_by || 'Agent',
-                  message: note.note || 'No content',
-                  timestamp: note.created_at || new Date().toISOString(),
-                  isAgent: true,
+              const apiComments: Comment[] = commentsData.data.map((note: any, index: number) => ({
+                id: `api-note-${note.id || index}`,
+                author: 'You', // Show all comments as "You" since they're user comments
+                message: note.note || 'No content',
+                timestamp: note.created_at || new Date().toISOString(),
+                isAgent: false, // Mark as user comment, not agent
                   attachments: note.documents ? note.documents.map((doc: string, docIndex: number) => {
                     let downloadUrl = doc;
                     if (!doc.startsWith('http://') && !doc.startsWith('https://')) {
@@ -358,10 +358,10 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
             if (commentsData.status === '1' && commentsData.data && Array.isArray(commentsData.data)) {
               const apiComments: Comment[] = commentsData.data.map((note: any, index: number) => ({
                 id: `api-note-${note.id || index}`,
-                author: note.created_by || 'Agent',
+                author: 'You', // Show all comments as "You" since they're user comments
                 message: note.note || 'No content',
                 timestamp: note.created_at || new Date().toISOString(),
-                isAgent: true,
+                isAgent: false, // Mark as user comment, not agent
                 attachments: note.documents ? note.documents.map((doc: string, docIndex: number) => {
                   let downloadUrl = doc;
                   if (!doc.startsWith('http://') && !doc.startsWith('https://')) {
