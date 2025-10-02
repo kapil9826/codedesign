@@ -17,10 +17,6 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // Debug showLogoutConfirm state changes
-  useEffect(() => {
-    console.log('showLogoutConfirm state changed to:', showLogoutConfirm);
-  }, [showLogoutConfirm]);
 
   // Initialize with user data from localStorage if available
   const getInitialUserName = () => {
@@ -132,11 +128,8 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
   }, []);
 
   const handleLogoutClick = () => {
-    console.log('handleLogoutClick called');
     setShowUserMenu(false); // Close user menu when showing confirmation
-    console.log('Setting showLogoutConfirm to true');
     setShowLogoutConfirm(true);
-    console.log('showLogoutConfirm should now be true');
   };
 
   const handleLogoutConfirm = async () => {
@@ -185,24 +178,6 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
             Create Ticket
           </button>
 
-          {/* Test button to force show modal */}
-          <button 
-            onClick={() => {
-              console.log('Test button clicked, setting showLogoutConfirm to true');
-              setShowLogoutConfirm(true);
-            }}
-            style={{
-              background: 'red',
-              color: 'white',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '4px',
-              marginLeft: '10px',
-              cursor: 'pointer'
-            }}
-          >
-            TEST MODAL
-          </button>
 
 
           <div className="user-menu">
