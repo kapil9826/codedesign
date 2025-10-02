@@ -126,21 +126,25 @@ export const addTicketNoteSimple = async (ticketId: string, comment: string, att
     formData.append('comment', comment);
     formData.append('message', comment);
     
-    // Add attachments if any
+    // Add attachments if any (but don't let them break the comment)
     if (attachments && attachments.length > 0) {
       console.log('📎 Adding attachments to form data:', attachments.length);
-      attachments.forEach((file, index) => {
-        console.log(`📎 Adding file ${index}:`, {
-          name: file.name,
-          size: file.size,
-          type: file.type
+      try {
+        attachments.forEach((file, index) => {
+          console.log(`📎 Adding file ${index}:`, {
+            name: file.name,
+            size: file.size,
+            type: file.type
+          });
+          formData.append(`attachment_${index}`, file);
+          formData.append(`file_${index}`, file);
+          formData.append(`document_${index}`, file);
         });
-        formData.append(`attachment_${index}`, file);
-        formData.append(`file_${index}`, file);
-        formData.append(`document_${index}`, file);
-      });
+      } catch (attachmentError) {
+        console.log('⚠️ Error adding attachments, continuing with comment only:', attachmentError);
+      }
     } else {
-      console.log('📎 No attachments to send');
+      console.log('📎 No attachments to send - comment only');
     }
     
     console.log('📤 Sending form data to API with attachments...');

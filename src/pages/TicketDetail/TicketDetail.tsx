@@ -559,36 +559,53 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     try {
       setIsUploadingComment(true);
       
-      // Try the attachment-specific API first
+      // PRIORITY: Add comment first without attachments to ensure it works
       let result;
       try {
-        console.log('🔄 Trying attachment-specific API...');
-        result = await addCommentWithAttachments(ticketId, newComment, selectedFiles);
-        console.log('📡 Attachment API result:', result);
+        console.log('🔄 Adding comment WITHOUT attachments first...');
+        result = await addTicketNoteSimple(ticketId, newComment, []); // Empty array for no attachments
+        console.log('📡 Comment-only API result:', result);
+        
+        // If comment was successful and we have attachments, try to add them separately
+        if (result.success && selectedFiles.length > 0) {
+          console.log('📎 Comment added successfully, now trying to add attachments...');
+          try {
+            const attachmentResult = await addCommentWithAttachments(ticketId, 'File attachment', selectedFiles);
+            console.log('📎 Attachment result:', attachmentResult);
+            // Don't fail the whole operation if attachments fail
+            if (!attachmentResult.success) {
+              console.log('⚠️ Attachments failed but comment was added successfully');
+            }
+          } catch (attachmentError) {
+            console.log('⚠️ Attachment upload failed but comment was added:', attachmentError);
+          }
+        }
       } catch (error) {
-        console.log('⚠️ Attachment API failed, trying simplified API...', error);
+        console.log('⚠️ Comment-only API failed, trying with attachments...', error);
         try {
           result = await addTicketNoteSimple(ticketId, newComment, selectedFiles);
-          console.log('📡 Simplified API result:', result);
+          console.log('📡 API with attachments result:', result);
         } catch (fallbackError) {
-          console.log('⚠️ Simplified API failed, trying main API...', fallbackError);
-          try {
-            result = await Promise.race([
-              ApiService.addTicketNote(ticketId, newComment, selectedFiles),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('API timeout')), 10000)
-              )
-            ]);
-          } catch (mainApiError) {
-            console.log('⚠️ All APIs failed, using fallback...', mainApiError);
-            result = { success: false, error: 'All APIs failed' };
-          }
+          console.log('⚠️ All APIs failed, using fallback...', fallbackError);
+          result = { success: false, error: 'All APIs failed' };
         }
       }
       
       // If the main API fails, try a simpler approach
       if (!result.success) {
         console.log('🔄 Main API failed, trying simplified approach...');
+        
+        // Last resort: try to add comment without any attachments at all
+        try {
+          console.log('🔄 Last resort: trying comment without ANY attachments...');
+          const simpleResult = await addTicketNoteSimple(ticketId, newComment, []);
+          if (simpleResult.success) {
+            console.log('✅ Comment added successfully via simple approach');
+            result = simpleResult;
+          }
+        } catch (simpleError) {
+          console.log('⚠️ Even simple approach failed:', simpleError);
+        }
         
         try {
           // Create a simplified FormData
