@@ -430,12 +430,14 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           }
         }
         
-        // Load local comments for this ticket
+        // Load local comments for this ticket and preserve them
         try {
           const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
           if (localComments[ticketId] && Array.isArray(localComments[ticketId])) {
-            console.log('💾 Loading local comments for ticket:', ticketId);
+            console.log('💾 Loading local comments for ticket:', ticketId, localComments[ticketId].length);
+            // Add local comments to existing comments (don't replace them)
             existingComments = [...existingComments, ...localComments[ticketId]];
+            console.log('💾 Total comments after adding local:', existingComments.length);
           }
         } catch (error) {
           console.log('⚠️ Could not load local comments:', error);
@@ -653,12 +655,12 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       if (result.success) {
         console.log('✅ Comment added successfully via API');
         
-        // Clear API cache to force refresh
-        ApiService.clearCache();
+        // DON'T clear cache - let comments persist
+        // ApiService.clearCache();
         
-        // Clear localStorage cache
-        localStorage.removeItem('cachedTickets');
-        localStorage.removeItem('cachedTicketDetails');
+        // DON'T clear localStorage - let comments persist
+        // localStorage.removeItem('cachedTickets');
+        // localStorage.removeItem('cachedTicketDetails');
         
         const attachmentData = selectedFiles.map((file, index) => ({
           id: `attachment-${Date.now()}-${index}`,
@@ -683,6 +685,20 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         };
         
         setComments(prev => [...prev, newCommentObj]);
+        
+        // Save comment to localStorage for persistence
+        try {
+          const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
+          if (!localComments[ticketId]) {
+            localComments[ticketId] = [];
+          }
+          localComments[ticketId].push(newCommentObj);
+          localStorage.setItem('localComments', JSON.stringify(localComments));
+          console.log('💾 Comment saved to localStorage for persistence');
+        } catch (error) {
+          console.log('⚠️ Could not save comment to localStorage:', error);
+        }
+        
         setNewComment('');
         setSelectedFiles([]);
         
@@ -693,14 +709,14 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         // Show success message
         setShowCommentSuccess(true);
         
-        // Force refresh ticket details after a short delay
-        setTimeout(async () => {
-          try {
-            await fetchTicketDetails(ticketId, true); // Force refresh
-          } catch (error) {
-            console.log('⚠️ Error refreshing ticket details after comment:', error);
-          }
-        }, 1000);
+        // DON'T force refresh - let comments stay visible
+        // setTimeout(async () => {
+        //   try {
+        //     await fetchTicketDetails(ticketId, true); // Force refresh
+        //   } catch (error) {
+        //     console.log('⚠️ Error refreshing ticket details after comment:', error);
+        //   }
+        // }, 1000);
         
       } else {
         console.error('❌ Failed to add comment:', result.error);
