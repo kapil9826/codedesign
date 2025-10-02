@@ -67,13 +67,31 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
   const [statuses, setStatuses] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
 
-  // Clear cache function
+  // Clear cache function - enhanced to clear all caches
   const clearCache = useCallback(() => {
+    console.log('🗑️ Clearing all caches...');
+    
+    // Clear sidebar tickets cache
+    localStorage.removeItem('sidebar-tickets');
+    localStorage.removeItem('sidebar-tickets-timestamp');
+    
+    // Clear ticket details cache
+    localStorage.removeItem('ticket-details');
+    localStorage.removeItem('ticket-details-timestamp');
+    
+    // Clear old cache keys
     localStorage.removeItem('cachedTickets');
     localStorage.removeItem('ticketsCacheTimestamp');
+    
+    // Clear API cache
+    ApiService.clearCache();
+    
+    // Reset state
     setTickets([]);
     setError('');
     setLoading(true);
+    
+    console.log('✅ All caches cleared');
   }, []);
 
   // Memoized status options to prevent unnecessary re-renders
@@ -231,10 +249,42 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         } else {
           setError('Failed to fetch tickets. Please try again.');
         }
+        
+        // Try to use cached data as fallback
+        const fallbackCache = localStorage.getItem('sidebar-tickets');
+        if (fallbackCache) {
+          try {
+            const cachedData = JSON.parse(fallbackCache);
+            if (cachedData.tickets && cachedData.tickets.length > 0) {
+              console.log('🔄 Using fallback cached data due to API error');
+              setTickets(cachedData.tickets);
+              setTotalTickets(cachedData.totalTickets);
+              setError(''); // Clear error since we have cached data
+            }
+          } catch (cacheError) {
+            console.log('⚠️ Could not use fallback cache:', cacheError);
+          }
+        }
       }
     } catch (error: any) {
       console.error('❌ Error fetching tickets:', error);
       setError('Network error. Please check your connection.');
+      
+      // Try to use cached data as fallback
+      const fallbackCache = localStorage.getItem('sidebar-tickets');
+      if (fallbackCache) {
+        try {
+          const cachedData = JSON.parse(fallbackCache);
+          if (cachedData.tickets && cachedData.tickets.length > 0) {
+            console.log('🔄 Using fallback cached data due to network error');
+            setTickets(cachedData.tickets);
+            setTotalTickets(cachedData.totalTickets);
+            setError(''); // Clear error since we have cached data
+          }
+        } catch (cacheError) {
+          console.log('⚠️ Could not use fallback cache:', cacheError);
+        }
+      }
     } finally {
       setLoading(false);
     }
