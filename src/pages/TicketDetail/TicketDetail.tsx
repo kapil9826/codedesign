@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { CgAttachment } from "react-icons/cg";
 import SkeletonLoader from '../../components/SkeletonLoader/SkeletonLoader';
 import CommentLoader from '../../components/CommentLoader/CommentLoader';
-import CommentSuccess from '../../components/CommentSuccess/CommentSuccess';
 import ApiService from '../../services/api';
 import { addTicketNoteSimple } from '../../services/api-simple-note';
 import { addCommentWithAttachments } from '../../services/api-attachments';
@@ -66,7 +65,6 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingComment, setIsUploadingComment] = useState(false);
-  const [showCommentSuccess, setShowCommentSuccess] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [statuses, setStatuses] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
@@ -306,8 +304,6 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       
       setNewComment('');
       setSelectedFiles([]);
-      setShowCommentSuccess(true);
-      setTimeout(() => setShowCommentSuccess(false), 3000);
       
       if (!apiSuccess) {
         console.log('⚠️ Comment not added to API, adding locally as fallback');
@@ -623,9 +619,6 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           )}
           {isUploadingComment && (
             <CommentLoader message="Adding your comment..." />
-          )}
-          {showCommentSuccess && (
-            <CommentSuccess onComplete={() => setShowCommentSuccess(false)} />
           )}
           {comments.map((comment) => (
             <div key={comment.id} className="comment-item">
