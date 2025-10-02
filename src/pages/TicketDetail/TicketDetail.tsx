@@ -1079,7 +1079,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
                 disabled={isUploadingComment}
                 title="Send comment"
                 style={{
-                  backgroundColor: '#007bff',
+                  backgroundColor: 'rgb(3, 92, 98)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -1092,12 +1092,12 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
                 }}
                 onMouseEnter={(e) => {
                   if (!isUploadingComment) {
-                    e.currentTarget.style.backgroundColor = '#0056b3';
+                    e.currentTarget.style.backgroundColor = 'rgb(2, 70, 75)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isUploadingComment) {
-                    e.currentTarget.style.backgroundColor = '#007bff';
+                    e.currentTarget.style.backgroundColor = 'rgb(3, 92, 98)';
                   }
                 }}
               >
