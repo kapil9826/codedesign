@@ -5,6 +5,7 @@ import CommentLoader from '../../components/CommentLoader/CommentLoader';
 import CommentSuccess from '../../components/CommentSuccess/CommentSuccess';
 import ApiService from '../../services/api';
 import { addTicketNoteSimple } from '../../services/api-simple-note';
+import { addCommentWithAttachments } from '../../services/api-attachments';
 import './TicketDetail.css';
 
 interface Ticket {
@@ -558,24 +559,30 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     try {
       setIsUploadingComment(true);
       
-      // Try the simplified API first
+      // Try the attachment-specific API first
       let result;
       try {
-        console.log('🔄 Trying simplified addTicketNote...');
-        result = await addTicketNoteSimple(ticketId, newComment, selectedFiles);
-        console.log('📡 Simplified API result:', result);
+        console.log('🔄 Trying attachment-specific API...');
+        result = await addCommentWithAttachments(ticketId, newComment, selectedFiles);
+        console.log('📡 Attachment API result:', result);
       } catch (error) {
-        console.log('⚠️ Simplified API failed, trying main API...', error);
+        console.log('⚠️ Attachment API failed, trying simplified API...', error);
         try {
-          result = await Promise.race([
-            ApiService.addTicketNote(ticketId, newComment, selectedFiles),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('API timeout')), 10000)
-            )
-          ]);
+          result = await addTicketNoteSimple(ticketId, newComment, selectedFiles);
+          console.log('📡 Simplified API result:', result);
         } catch (fallbackError) {
-          console.log('⚠️ Both APIs failed, using fallback...', fallbackError);
-          result = { success: false, error: 'All APIs failed' };
+          console.log('⚠️ Simplified API failed, trying main API...', fallbackError);
+          try {
+            result = await Promise.race([
+              ApiService.addTicketNote(ticketId, newComment, selectedFiles),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('API timeout')), 10000)
+              )
+            ]);
+          } catch (mainApiError) {
+            console.log('⚠️ All APIs failed, using fallback...', mainApiError);
+            result = { success: false, error: 'All APIs failed' };
+          }
         }
       }
       

@@ -128,32 +128,71 @@ export const addTicketNoteSimple = async (ticketId: string, comment: string, att
     
     // Add attachments if any
     if (attachments && attachments.length > 0) {
+      console.log('📎 Adding attachments to form data:', attachments.length);
       attachments.forEach((file, index) => {
+        console.log(`📎 Adding file ${index}:`, {
+          name: file.name,
+          size: file.size,
+          type: file.type
+        });
         formData.append(`attachment_${index}`, file);
+        formData.append(`file_${index}`, file);
+        formData.append(`document_${index}`, file);
       });
+    } else {
+      console.log('📎 No attachments to send');
     }
     
-    console.log('📤 Sending form data to API...');
+    console.log('📤 Sending form data to API with attachments...');
     
-    // Try the main endpoint
-    const response = await fetchWithTimeout(`${API_BASE_URL}/add-ticket-note`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-      },
-      body: formData
-    }, 15000);
+    // Try multiple endpoints for adding notes with attachments
+    const endpoints = [
+      `${API_BASE_URL}/add-ticket-note`,
+      `${API_BASE_URL}/ticket-note`,
+      `${API_BASE_URL}/add-note`,
+      `${API_BASE_URL}/ticket-comment`,
+      `${API_BASE_URL}/add-comment`,
+      `${API_BASE_URL}/support-ticket-note`
+    ];
     
-    console.log('📡 Response status:', response.status);
+    let response;
+    let successfulEndpoint = null;
     
-    if (response.ok) {
-      const responseData = await response.json();
-      console.log('✅ Note added successfully:', responseData);
-      return { success: true, data: responseData };
-    } else {
-      const errorText = await response.text();
-      console.log('❌ Failed to add note:', errorText);
-      return { success: false, error: `Failed to add note: ${response.statusText}` };
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`🔍 Trying endpoint: ${endpoint}`);
+        
+        response = await fetchWithTimeout(endpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getAuthToken()}`,
+          },
+          body: formData
+        }, 15000);
+        
+        console.log(`📡 Response from ${endpoint}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        });
+        
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log(`✅ Success with ${endpoint}:`, responseData);
+          successfulEndpoint = endpoint;
+          return { success: true, data: responseData };
+        } else {
+          const errorText = await response.text();
+          console.log(`❌ Failed with ${endpoint}:`, errorText);
+        }
+      } catch (error) {
+        console.log(`❌ Error with ${endpoint}:`, error);
+      }
+    }
+    
+    if (!successfulEndpoint) {
+      console.log('❌ All endpoints failed');
+      return { success: false, error: 'Failed to add note - all endpoints failed' };
     }
   } catch (error) {
     console.error('❌ Error adding ticket note:', error);
