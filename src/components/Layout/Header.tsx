@@ -18,6 +18,11 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  // Debug showLogoutConfirm state changes
+  useEffect(() => {
+    console.log('showLogoutConfirm state changed to:', showLogoutConfirm);
+  }, [showLogoutConfirm]);
+
   // Initialize with user data from localStorage if available
   const getInitialUserName = () => {
     try {
@@ -128,8 +133,11 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
   }, []);
 
   const handleLogoutClick = () => {
+    console.log('handleLogoutClick called');
     setShowUserMenu(false); // Close user menu when showing confirmation
+    console.log('Setting showLogoutConfirm to true');
     setShowLogoutConfirm(true);
+    console.log('showLogoutConfirm should now be true');
   };
 
   const handleLogoutConfirm = async () => {
@@ -228,6 +236,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
       </div>
       
       {/* Logout Confirmation Modal */}
+      {console.log('Rendering LogoutConfirmation with showLogoutConfirm:', showLogoutConfirm)}
       <LogoutConfirmation
         isOpen={showLogoutConfirm}
         onConfirm={handleLogoutConfirm}

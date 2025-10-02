@@ -12,7 +12,14 @@ const LogoutConfirmation: React.FC<LogoutConfirmationProps> = ({
   onConfirm,
   onCancel
 }) => {
-  if (!isOpen) return null;
+  console.log('LogoutConfirmation rendered with isOpen:', isOpen);
+  
+  if (!isOpen) {
+    console.log('LogoutConfirmation: isOpen is false, returning null');
+    return null;
+  }
+  
+  console.log('LogoutConfirmation: isOpen is true, rendering modal');
 
   return (
     <div className="logout-modal-overlay">
