@@ -216,6 +216,20 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     fetchTickets();
   }, [fetchTickets]);
 
+  // Listen for ticket creation events to refresh the sidebar
+  useEffect(() => {
+    const handleTicketCreated = () => {
+      console.log('Ticket created event received, refreshing sidebar tickets...');
+      fetchTickets();
+    };
+
+    window.addEventListener('ticketCreated', handleTicketCreated);
+    
+    return () => {
+      window.removeEventListener('ticketCreated', handleTicketCreated);
+    };
+  }, [fetchTickets]);
+
   // Optimized fetch ticket details with caching and reduced API calls
   const fetchTicketDetails = useCallback(async (ticketId: string, forceRefresh: boolean = false) => {
     try {

@@ -267,6 +267,20 @@ const TicketList: React.FC = () => {
     fetchTickets();
   }, [currentPage]);
 
+  // Listen for ticket creation events to refresh the list
+  useEffect(() => {
+    const handleTicketCreated = () => {
+      console.log('Ticket created event received, refreshing ticket list...');
+      fetchTickets();
+    };
+
+    window.addEventListener('ticketCreated', handleTicketCreated);
+    
+    return () => {
+      window.removeEventListener('ticketCreated', handleTicketCreated);
+    };
+  }, []);
+
   // Auto-refresh tickets every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {

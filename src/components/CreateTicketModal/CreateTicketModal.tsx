@@ -252,6 +252,11 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
         // Priority data is now handled by the API response only
         console.log('✅ Ticket created successfully with priority:', priorityName);
         
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('ticketCreated', {
+          detail: { ticketData: result.data }
+        }));
+        
         // Reset form
         setFormData({
           title: '',
