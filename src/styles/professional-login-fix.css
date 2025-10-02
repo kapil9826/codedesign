@@ -10,23 +10,12 @@ body:has(.login-container) {
 /* Login container - clean and isolated */
 .login-container {
   /* Force proper positioning and layering */
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
+  position: relative !important;
   z-index: 1 !important;
   
   /* Ensure container is clickable */
   pointer-events: auto !important;
   overflow: visible !important;
-  
-  /* Remove any isolation that might interfere */
-  isolation: auto !important;
-  transform: none !important;
-  will-change: auto !important;
 }
 
 /* Login card - clean positioning */
@@ -37,11 +26,6 @@ body:has(.login-container) {
   /* Ensure card is clickable */
   pointer-events: auto !important;
   overflow: visible !important;
-  
-  /* Remove any isolation */
-  isolation: auto !important;
-  transform: none !important;
-  will-change: auto !important;
 }
 
 /* Login form - clean and functional */
@@ -75,7 +59,7 @@ body:has(.login-container) {
 }
 
 /* Input fields - clean and functional */
-.simple-input {
+.exact-input {
   position: relative !important;
   z-index: 13 !important;
   
@@ -89,17 +73,11 @@ body:has(.login-container) {
   
   /* Clean styling */
   background: white !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #2d3748 !important;
+  border: 1px solid #d1d5db !important;
+  color: #374151 !important;
   font-family: 'Inter', sans-serif !important;
-  font-size: 0.875rem !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
-  
-  /* Remove any interference */
-  isolation: auto !important;
-  transform: none !important;
-  will-change: auto !important;
-  overflow: visible !important;
   
   /* Ensure proper display */
   display: block !important;
@@ -108,15 +86,15 @@ body:has(.login-container) {
 }
 
 /* Input focus states */
-.simple-input:focus {
-  border-color: #035c62 !important;
-  box-shadow: 0 0 0 3px rgba(3, 92, 98, 0.1) !important;
+.exact-input:focus {
+  border-color: #1A6B70 !important;
+  box-shadow: 0 0 0 2px rgba(26, 107, 112, 0.1) !important;
   outline: none !important;
   z-index: 14 !important;
 }
 
 /* Login button - clean and functional */
-.login-button {
+.modern-button {
   position: relative !important;
   z-index: 13 !important;
   
@@ -129,18 +107,12 @@ body:has(.login-container) {
   -ms-user-select: none !important;
   
   /* Clean styling */
-  background: #035c62 !important;
+  background: #1A6B70 !important;
   color: white !important;
-  border: 1px solid #024a4f !important;
+  border: none !important;
   font-family: 'Inter', sans-serif !important;
-  font-size: 0.875rem !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
-  
-  /* Remove any interference */
-  isolation: auto !important;
-  transform: none !important;
-  will-change: auto !important;
-  overflow: visible !important;
   
   /* Ensure proper display */
   display: flex !important;
@@ -149,20 +121,18 @@ body:has(.login-container) {
 }
 
 /* Button hover states */
-.login-button:hover:not(:disabled) {
-  background: #024a4f !important;
-  border-color: #013a3e !important;
+.modern-button:hover:not(:disabled) {
+  background: #1E7A80 !important;
   transform: translateY(-1px) !important;
 }
 
-.login-button:active:not(:disabled) {
+.modern-button:active:not(:disabled) {
   transform: translateY(0) !important;
 }
 
 /* Button disabled state */
-.login-button:disabled {
+.modern-button:disabled {
   background: #9ca3af !important;
-  border-color: #9ca3af !important;
   cursor: not-allowed !important;
   opacity: 0.6 !important;
 }
@@ -170,16 +140,16 @@ body:has(.login-container) {
 /* Override any global button resets */
 .login-container button {
   /* Reset to login button styles */
-  background: #035c62 !important;
+  background: #1A6B70 !important;
   color: white !important;
-  border: 1px solid #024a4f !important;
-  border-radius: 4px !important;
-  padding: 0.5rem !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 12px 16px !important;
   cursor: pointer !important;
-  font-size: 0.875rem !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
   font-family: 'Inter', sans-serif !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.2s ease !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -195,17 +165,17 @@ body:has(.login-container) {
 .login-container input {
   /* Reset to login input styles */
   font-family: 'Inter', sans-serif !important;
-  font-size: 0.875rem !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
-  color: #2d3748 !important;
+  color: #374151 !important;
   background: white !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 4px !important;
-  padding: 0.5rem !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  padding: 12px 16px !important;
   width: 100% !important;
   box-sizing: border-box !important;
   outline: none !important;
-  transition: border-color 0.3s ease !important;
+  transition: all 0.2s ease !important;
   pointer-events: auto !important;
   cursor: text !important;
   user-select: text !important;

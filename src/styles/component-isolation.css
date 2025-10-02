@@ -49,7 +49,7 @@
 .login-container {
   position: relative;
   z-index: 1;
-  isolation: isolate;
+  /* Remove isolation to allow animations */
 }
 
 .header {

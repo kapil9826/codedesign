@@ -46,6 +46,13 @@ const getAuthToken = (): string | null => {
   const token = localStorage.getItem('authToken');
   console.log('Current auth token:', token ? 'Token exists' : 'No token found');
   
+  // If no token but user is authenticated, set a default token
+  if (!token && localStorage.getItem('isAuthenticated') === 'true') {
+    console.log('🔄 No token found but user is authenticated, setting default token');
+    localStorage.setItem('authToken', 'mock_token_12345');
+    return 'mock_token_12345';
+  }
+  
   // Force replace invalid token with mock token
   if (token === 'ebdb2d') {
     console.log('🔄 Replacing invalid token with mock token');
@@ -241,15 +248,18 @@ export class ApiService {
   }
 
   // Get tickets list with caching and retry mechanism
-  static async getTickets(page: number = 1, perPage: number = 10, useCache: boolean = true) {
+  static async getTickets(useCache: boolean = true) {
     try {
       // Check cache first
       if (useCache) {
-        const cacheKey = getCacheKey('tickets', { page, perPage, user: getUserName() });
+        const cacheKey = getCacheKey('tickets', { user: getUserName() });
         const cachedData = getCachedData(cacheKey);
         if (cachedData) {
+          console.log('🚀 Using cached data for all tickets');
           return cachedData;
         }
+      } else {
+        console.log('🔄 Cache disabled, fetching fresh data');
       }
 
       if (!isOnline()) {
@@ -257,20 +267,26 @@ export class ApiService {
         return { success: false, error: 'No internet connection', useMockData: true };
       }
 
-      console.log('🚀 Fetching tickets from API...');
+      console.log('🚀 Fetching ALL tickets from API...');
       console.log('Current token:', getAuthToken());
-      console.log('Requesting page:', page, 'per page:', perPage);
       
       const userName = getUserName();
+      console.log('Getting all tickets for user:', userName);
       console.log('User making request:', userName);
       
       const requestFn = async () => {
         // Try different endpoints to get tickets with priority data
         const possibleEndpoints = [
-          `${API_BASE_URL}/support-tickets?page=${page}&per_page=${perPage}&limit=100&user_name=${encodeURIComponent(userName)}`,
-          `${API_BASE_URL}/tickets?page=${page}&per_page=${perPage}&limit=100&user_name=${encodeURIComponent(userName)}&include_priority=true`,
-          `${API_BASE_URL}/tickets?page=${page}&per_page=${perPage}&limit=100&user_name=${encodeURIComponent(userName)}&with_priority=true`,
-          `${API_BASE_URL}/tickets?page=${page}&per_page=${perPage}&limit=100&user_name=${encodeURIComponent(userName)}`
+          `${API_BASE_URL}/support-tickets?user_name=${encodeURIComponent(userName)}&limit=1000&per_page=1000`,
+          `${API_BASE_URL}/tickets?user_name=${encodeURIComponent(userName)}&include_priority=true&limit=1000&per_page=1000`,
+          `${API_BASE_URL}/tickets?user_name=${encodeURIComponent(userName)}&with_priority=true&limit=1000&per_page=1000`,
+          `${API_BASE_URL}/tickets?user_name=${encodeURIComponent(userName)}&limit=1000&per_page=1000`,
+          `${API_BASE_URL}/support-tickets?user_name=${encodeURIComponent(userName)}&all=true`,
+          `${API_BASE_URL}/tickets?user_name=${encodeURIComponent(userName)}&all=true&include_priority=true`,
+          `${API_BASE_URL}/support-tickets?user_name=${encodeURIComponent(userName)}&page=1&per_page=1000`,
+          `${API_BASE_URL}/tickets?user_name=${encodeURIComponent(userName)}&page=1&per_page=1000&include_priority=true`,
+          `${API_BASE_URL}/support-tickets?user_name=${encodeURIComponent(userName)}`,
+          `${API_BASE_URL}/tickets?user_name=${encodeURIComponent(userName)}&include_priority=true`
         ];
         
         let response;
@@ -279,6 +295,7 @@ export class ApiService {
         for (const endpoint of possibleEndpoints) {
           try {
             console.log(`🔍 Trying endpoint: ${endpoint}`);
+            console.log(`📊 Request details: Getting ALL tickets for user`);
             response = await fetchWithTimeout(endpoint, {
               method: 'GET',
               headers: createHeaders(),
@@ -300,7 +317,25 @@ export class ApiService {
         }
 
         const data = await response.json();
-        console.log('Get Tickets API Response:', data);
+        console.log('Get Tickets API Response:', {
+          status: data.status,
+          message: data.message,
+          links: data.links,
+          dataLength: data.data ? data.data.length : 0,
+          fullResponse: data
+        });
+        
+        // Debug: Log the actual data structure
+        if (data.data && Array.isArray(data.data)) {
+          console.log('🔍 API returned tickets:', data.data.length);
+          console.log('🔍 First few tickets:', data.data.slice(0, 3).map(t => ({
+            id: t.id,
+            ticket_number: t.ticket_number,
+            title: t.title
+          })));
+        } else {
+          console.log('⚠️ API data is not an array:', data.data);
+        }
         
         // Debug: Check if priority data is included
         if (data.data && Array.isArray(data.data)) {
@@ -324,7 +359,7 @@ export class ApiService {
         
         // Cache successful responses
         if (result.success && useCache) {
-          const cacheKey = getCacheKey('tickets', { page, perPage, user: userName });
+          const cacheKey = getCacheKey('tickets', { user: userName });
           setCachedData(cacheKey, result, CACHE_TTL);
         }
         
@@ -377,7 +412,7 @@ export class ApiService {
       if (!/^\d+$/.test(String(databaseId))) {
         try {
           console.log('🔄 Fetching tickets to find database ID for ticket details...');
-          const ticketsResult = await this.getTickets(1, 100);
+          const ticketsResult = await this.getTickets();
         console.log('📡 Tickets fetch result for ticket details:', {
           success: ticketsResult.success,
           hasData: !!ticketsResult.data,
@@ -700,7 +735,7 @@ export class ApiService {
         console.log('🔄 Fetching tickets to find database ID...');
         // First, try to get tickets to find the correct database ID
         // For new tickets, we might need to fetch more pages or use a different approach
-        const ticketsResult = await this.getTickets(1, 1000);
+        const ticketsResult = await this.getTickets();
         console.log('📡 Tickets fetch result:', {
           success: ticketsResult.success,
           hasData: !!ticketsResult.data,
@@ -749,7 +784,7 @@ export class ApiService {
             // For new tickets, try to fetch more pages or use a different approach
             console.log('🔄 Ticket not found in first 100, trying to fetch more pages...');
             try {
-              const moreTicketsResult = await this.getTickets(1, 1000); // Try to get more tickets
+              const moreTicketsResult = await this.getTickets(); // Try to get more tickets
               if (moreTicketsResult.success && moreTicketsResult.data && moreTicketsResult.data.data) {
                 const moreTickets = moreTicketsResult.data.data;
                 console.log('📋 More tickets available:', moreTickets.length);
@@ -1122,7 +1157,7 @@ export class ApiService {
       try {
         // Try to get the database ID from the tickets data
         console.log('🔄 Fetching tickets to find database ID for notes...');
-        const ticketsResult = await this.getTickets(1, 100);
+        const ticketsResult = await this.getTickets();
         console.log('📡 Tickets fetch result for notes:', {
           success: ticketsResult.success,
           hasData: !!ticketsResult.data,

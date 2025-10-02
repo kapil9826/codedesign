@@ -38,7 +38,7 @@
 }
 
 .logo-image {
-  height: 32px;
+  height: 42px;
   width: auto;
   object-fit: contain;
 }
@@ -62,7 +62,7 @@
   display: flex !important;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 12px !important;
   font-weight: 600;
   font-family: 'Inter', sans-serif;
   position: relative;

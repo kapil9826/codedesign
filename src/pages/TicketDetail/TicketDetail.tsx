@@ -64,14 +64,19 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
   const [comments, setComments] = useState<Comment[]>([]);
   const [statuses, setStatuses] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
-  const [sidebarCurrentPage, setSidebarCurrentPage] = useState(1);
-  const [sidebarTotalPages, setSidebarTotalPages] = useState(0);
-  const sidebarTicketsPerPage = 15;
+
+  // Clear cache function
+  const clearCache = useCallback(() => {
+    localStorage.removeItem('cachedTickets');
+    localStorage.removeItem('ticketsCacheTimestamp');
+    setTickets([]);
+    setError('');
+    setLoading(true);
+  }, []);
 
   // Memoized status options to prevent unnecessary re-renders
   const statusOptions = useMemo(() => [
     { value: 'all', label: 'All Status' },
-    { value: 'Null', label: 'Null' },
     ...statuses.map((status: any) => ({
       value: status.name,
       label: status.name
@@ -81,7 +86,6 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
   // Memoized priority options to prevent unnecessary re-renders
   const priorityOptions = useMemo(() => [
     { value: 'all', label: 'All Priority' },
-    { value: 'Null', label: 'Null' },
     ...priorities.map((priority: any) => ({
       value: priority.name,
       label: priority.name
@@ -127,79 +131,90 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     };
   }, []);
 
-  // Optimized fetch tickets with caching and reduced API calls
+  // Simple fetch tickets - no pagination
   const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       
-      // Check if we already have tickets in cache
-      const cachedTickets = localStorage.getItem('cachedTickets');
-      const cacheTimestamp = localStorage.getItem('ticketsCacheTimestamp');
-      const now = Date.now();
-      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      console.log('🔍 Fetching all tickets...');
       
-      if (cachedTickets && cacheTimestamp && (now - parseInt(cacheTimestamp)) < CACHE_DURATION) {
-        console.log('🚀 Using cached tickets');
-        const tickets = JSON.parse(cachedTickets);
-        setTickets(tickets);
+      // Check authentication first
+      const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+      const token = localStorage.getItem('authToken');
+      
+      console.log('🔍 Auth check:', { isAuth, hasToken: !!token });
+      
+      if (!isAuth || !token) {
+        setError('Please login to view tickets');
         setLoading(false);
         return;
       }
       
-      const result = await ApiService.getTickets(sidebarCurrentPage, sidebarTicketsPerPage);
+      // Try to get tickets with a simple API call
+      const result = await ApiService.getTickets(false);
       
-      if (result.success && result.data && result.data.status === '1' && result.data.data) {
+      console.log('📋 Full API Result:', result);
+      
+      if (result.success && result.data) {
+        console.log('📋 API Data:', result.data);
+        
         let apiTickets = [];
+        
+        // Handle different response structures
         if (Array.isArray(result.data.data)) {
           apiTickets = result.data.data;
         } else if (result.data.data && typeof result.data.data === 'object' && Array.isArray(result.data.data.data)) {
           apiTickets = result.data.data.data;
+        } else if (Array.isArray(result.data)) {
+          apiTickets = result.data;
         }
+        
+        console.log('📋 Processed tickets:', {
+          ticketsCount: apiTickets.length,
+          tickets: apiTickets
+        });
         
         if (apiTickets.length > 0) {
           // Use optimized transformation
           const transformedTickets: Ticket[] = apiTickets.map(transformTicket);
           setTickets(transformedTickets);
           
-          // Calculate total pages
-          const totalTickets = result.data.total || result.data.total_tickets || apiTickets.length;
-          const totalPages = Math.ceil(totalTickets / sidebarTicketsPerPage);
-          console.log('🔢 Sidebar Pagination Debug:', {
-            totalTickets,
-            sidebarTicketsPerPage,
-            totalPages,
-            sidebarCurrentPage,
-            apiTicketsLength: apiTickets.length,
-            apiResponse: result.data
+          console.log('✅ Tickets loaded successfully:', {
+            ticketsCount: transformedTickets.length
           });
-          setSidebarTotalPages(totalPages);
-          
-          // Cache the results
-          localStorage.setItem('cachedTickets', JSON.stringify(transformedTickets));
-          localStorage.setItem('ticketsCacheTimestamp', now.toString());
         } else {
           setTickets([]);
-          setSidebarTotalPages(0);
+          setError('No tickets found');
+          console.log('⚠️ No tickets found in response');
         }
       } else {
-        setError(result.error || 'Failed to load tickets');
+        const errorMsg = result.error || result.message || 'Failed to load tickets';
+        setError(errorMsg);
+        console.error('❌ API Error:', errorMsg, result);
+        
+        // Try to provide more helpful error message
+        if (result.error && result.error.includes('token')) {
+          setError('Authentication failed. Please login again.');
+        } else if (result.error && result.error.includes('network')) {
+          setError('Network error. Please check your connection.');
+        } else {
+          setError('Failed to fetch tickets. Please try again.');
+        }
       }
     } catch (error: any) {
-      console.error('❌ Sidebar: Error fetching tickets:', error);
+      console.error('❌ Error fetching tickets:', error);
       setError('Network error. Please check your connection.');
     } finally {
       setLoading(false);
     }
-  }, [transformTicket, sidebarCurrentPage]);
+  }, [transformTicket]);
 
-  // Refetch tickets when sidebar page changes
+  // Initial load
   useEffect(() => {
-    // Clear cache when page changes to ensure fresh data
-    localStorage.removeItem('cachedTickets');
-    localStorage.removeItem('ticketsCacheTimestamp');
+    console.log('🚀 Initial load - fetching tickets');
     fetchTickets();
-  }, [sidebarCurrentPage, fetchTickets]);
+  }, [fetchTickets]);
 
   // Optimized fetch ticket details with caching and reduced API calls
   const fetchTicketDetails = useCallback(async (ticketId: string, forceRefresh: boolean = false) => {
@@ -258,7 +273,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         // Fallback to API if cache doesn't have the ticket
         if (databaseId === ticketId) {
           try {
-            const ticketsResult = await ApiService.getTickets(1, 1000);
+            const ticketsResult = await ApiService.getTickets();
             
             if (ticketsResult.success && ticketsResult.data && ticketsResult.data.data) {
               let apiTickets = [];
@@ -766,11 +781,11 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         </div>
         <div className="sidebar-filter">
           <select 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="status-dropdown"
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="priority-dropdown"
           >
-            {statusOptions.map(option => (
+            {priorityOptions.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -779,11 +794,11 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         </div>
         <div className="sidebar-filter">
           <select 
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="priority-dropdown"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="status-dropdown"
           >
-            {priorityOptions.map(option => (
+            {statusOptions.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -800,6 +815,20 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           {error && (
             <div className="sidebar-error">
               <p>⚠️ {error}</p>
+              <div className="sidebar-error-actions">
+                <button 
+                  onClick={() => fetchTickets()} 
+                  className="sidebar-retry-btn"
+                >
+                  Retry
+                </button>
+                <button 
+                  onClick={clearCache} 
+                  className="sidebar-clear-cache-btn"
+                >
+                  Clear Cache
+                </button>
+              </div>
             </div>
           )}
           
@@ -821,7 +850,21 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           
           {!loading && !error && tickets.length === 0 && (
             <div className="sidebar-no-tickets">
-              <p>No tickets available</p>
+              <p>No tickets found</p>
+              <div className="sidebar-error-actions">
+                <button 
+                  onClick={() => fetchTickets()} 
+                  className="sidebar-retry-btn"
+                >
+                  Retry
+                </button>
+                <button 
+                  onClick={clearCache} 
+                  className="sidebar-clear-cache-btn"
+                >
+                  Clear Cache
+                </button>
+              </div>
             </div>
           )}
           
@@ -851,30 +894,6 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           ))}
         </div>
 
-        {/* Sidebar Pagination */}
-        {sidebarTotalPages >= 1 && (
-          <div className="sidebar-pagination">
-            <div className="sidebar-pagination-info">
-              Page {sidebarCurrentPage} of {sidebarTotalPages}
-            </div>
-            <div className="sidebar-pagination-controls">
-              <button
-                onClick={() => setSidebarCurrentPage(Math.max(1, sidebarCurrentPage - 1))}
-                disabled={sidebarCurrentPage === 1}
-                className="sidebar-pagination-btn"
-              >
-                ‹
-              </button>
-              <button
-                onClick={() => setSidebarCurrentPage(Math.min(sidebarTotalPages, sidebarCurrentPage + 1))}
-                disabled={sidebarCurrentPage === sidebarTotalPages}
-                className="sidebar-pagination-btn"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Comments Section - Middle */}

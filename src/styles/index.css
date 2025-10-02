@@ -80,8 +80,8 @@ code {
   outline-offset: 2px;
 } */
 
-/* Button reset */
-button {
+/* Button reset - exclude login page */
+button:not(.login-container button) {
   background: none;
   border: none;
   cursor: pointer;
@@ -94,10 +94,10 @@ a {
   text-decoration: none;
 }
 
-/* Input reset */
-input,
-textarea,
-select {
+/* Input reset - exclude login page */
+input:not(.login-container input),
+textarea:not(.login-container textarea),
+select:not(.login-container select) {
   font-family: inherit;
   font-size: inherit;
 }

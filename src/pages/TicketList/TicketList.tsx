@@ -72,7 +72,6 @@ const TicketList: React.FC = () => {
   // Generate status options from API data
   const statusOptions = [
     { value: 'all', label: 'All Status' },
-    { value: 'Null', label: 'Null' },
     ...statuses.map((status: any) => ({
       value: status.name,
       label: status.name
@@ -82,7 +81,6 @@ const TicketList: React.FC = () => {
   // Generate priority options from API data
   const priorityOptions = [
     { value: 'all', label: 'All Priority' },
-    { value: 'Null', label: 'Null' },
     ...priorities.map(priority => ({
       value: priority.name,
       label: priority.name
@@ -125,7 +123,7 @@ const TicketList: React.FC = () => {
     
     // Use API data instead of mock data
     try {
-      const result = await ApiService.getTickets(currentPage, ticketsPerPage);
+      const result = await ApiService.getTickets();
       
       if (result.success && result.data && result.data.status === '1' && result.data.data) {
         // Process API data directly
@@ -325,6 +323,19 @@ const TicketList: React.FC = () => {
                   className="search-input"
                 />
               </div>
+                <div className="priority-filter">
+                <select 
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="priority-dropdown"
+                >
+                  {priorityOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="status-filter">
                 <select 
                   value={statusFilter}
@@ -338,19 +349,7 @@ const TicketList: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="priority-filter">
-                <select 
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="priority-dropdown"
-                >
-                  {priorityOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            
             </div>
           </div>
           

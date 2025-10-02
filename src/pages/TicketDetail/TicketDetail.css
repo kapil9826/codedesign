@@ -96,7 +96,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   padding: 0.25rem 0.4rem;
-  font-size: 0.6rem;
+  font-size: 0.7rem !important;
   color: #4a5568;
   cursor: pointer;
   height: 1.6rem;
@@ -108,7 +108,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   padding: 0.25rem 0.4rem;
-  font-size: 0.6rem;
+  font-size: 0.7rem !important;
   color: #4a5568;
   cursor: pointer;
   height: 1.6rem;
@@ -171,28 +171,25 @@
 }
 
 .sidebar-ticket-item:hover::before {
-  background: #dee0e0;
+  background: #d1d5db;
 }
 
 .sidebar-ticket-item:hover {
-  background: rgba(255, 255, 255, 1);
-  border-color: #bdc4c4;
-  box-shadow: 0 3px 10px rgba(72, 207, 213, 0.15);
+  background: #e5e7eb;
+  border-color: #d1d5db;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   transform: translateY(-1px);
 }
 
 .sidebar-ticket-item.active {
-  background: #a9a9a9;
-  color: white;
-  border-color: #f3f3f3;
-  box-shadow: 0 6px 20px rgba(248, 248, 248);
+  background: #e5e7eb;
+  color: #374151;
+  border-color: #d1d5db;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   transform: translateY(-1px);
 }
 
-.sidebar-ticket-item.active::before {
-  background: #ffffff;
-  width: 4px;
-}
+
 
 .sidebar-ticket-id {
   font-size: 0.65rem;
@@ -318,7 +315,7 @@
 }
 
 .sidebar-ticket-item.active .sidebar-ticket-issue {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(50, 50, 50, 0.8);
 }
 
 .sidebar-ticket-priority {
@@ -379,7 +376,7 @@
 }
 
 .sidebar-ticket-item.active .sidebar-ticket-status {
-  background: rgba(203, 198, 198, 0.2);
+  background: #e5e7eb;
   color: white;
 }
 
@@ -403,22 +400,49 @@
 .sidebar-loading .loading-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid #e2e8f0;
-  border-top: 2px solid #48cfd5;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 0.5rem;
 }
 
+/* Error and action buttons */
 .sidebar-error {
   padding: 1rem;
-  color: #e53e3e;
-  font-size: 0.875rem;
   text-align: center;
+  color: #e53e3e;
   background: #fed7d7;
   border: 1px solid #feb2b2;
-  border-radius: 4px;
+  border-radius: 8px;
   margin: 0.5rem;
+}
+
+.sidebar-error-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.sidebar-retry-btn,
+.sidebar-clear-cache-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-retry-btn:hover {
+  background: #f7fafc;
+  border-color: #035c62;
+  color: #035c62;
+}
+
+.sidebar-clear-cache-btn:hover {
+  background: #f7fafc;
+  border-color: #e53e3e;
+  color: #e53e3e;
 }
 
 .sidebar-no-tickets {
@@ -676,6 +700,7 @@
 
 .comment-textarea {
   width: 100%;
+  margin-top: -15px;
   padding: 1rem;
   border: none;
   border-radius: 8px 8px 0 0;
