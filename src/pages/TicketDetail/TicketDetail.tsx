@@ -226,7 +226,9 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
                   index === self.findIndex(c => c.id === comment.id)
                 );
                 
-                setComments(uniqueComments);
+                // Reverse order so recent comments appear at the bottom
+                const reversedComments = uniqueComments.reverse();
+                setComments(reversedComments);
                 console.log('💬 Loaded comments from API:', apiComments.length, 'local:', localTicketComments.length);
               } else {
                 console.log('⚠️ No comments found in API response');
@@ -393,7 +395,9 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
                 index === self.findIndex(c => c.id === comment.id)
               );
               
-              setComments(uniqueComments);
+              // Reverse order so recent comments appear at the bottom
+              const reversedComments = uniqueComments.reverse();
+              setComments(reversedComments);
               console.log('✅ Comments refreshed from API');
             }
           }
