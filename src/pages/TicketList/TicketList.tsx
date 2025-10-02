@@ -269,15 +269,25 @@ const TicketList: React.FC = () => {
 
   // Listen for ticket creation events to refresh the list
   useEffect(() => {
-    const handleTicketCreated = () => {
-      console.log('Ticket created event received, refreshing ticket list...');
+    const handleTicketCreated = (event: any) => {
+      console.log('🎫 Ticket created event received in TicketList:', event);
+      console.log('🎫 Refreshing ticket list...');
       fetchTickets();
     };
 
+    const handleRefreshTickets = () => {
+      console.log('🔄 Manual refresh triggered');
+      fetchTickets();
+    };
+
+    console.log('🎫 Adding ticketCreated event listener to TicketList');
     window.addEventListener('ticketCreated', handleTicketCreated);
+    window.addEventListener('refreshTickets', handleRefreshTickets);
     
     return () => {
+      console.log('🎫 Removing event listeners from TicketList');
       window.removeEventListener('ticketCreated', handleTicketCreated);
+      window.removeEventListener('refreshTickets', handleRefreshTickets);
     };
   }, []);
 

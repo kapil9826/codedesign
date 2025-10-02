@@ -253,9 +253,19 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
         console.log('✅ Ticket created successfully with priority:', priorityName);
         
         // Dispatch custom event to notify other components
-        window.dispatchEvent(new CustomEvent('ticketCreated', {
+        console.log('🎫 Dispatching ticketCreated event...');
+        const event = new CustomEvent('ticketCreated', {
           detail: { ticketData: result.data }
-        }));
+        });
+        window.dispatchEvent(event);
+        console.log('🎫 ticketCreated event dispatched successfully');
+        
+        // Add a small delay to ensure the event is processed before modal closes
+        setTimeout(() => {
+          console.log('🎫 Event dispatch completed, modal can close');
+          // Fallback: dispatch a generic refresh event
+          window.dispatchEvent(new CustomEvent('refreshTickets'));
+        }, 100);
         
         // Reset form
         setFormData({
