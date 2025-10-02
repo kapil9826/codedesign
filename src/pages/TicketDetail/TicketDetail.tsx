@@ -723,9 +723,10 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     }
   }, [ticketId, newComment, selectedFiles]);
 
-  // Optimized key press handler
+  // Optimized key press handler - Enter to submit comment
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevent new line in textarea
       handleAddComment();
     }
   }, [handleAddComment]);
@@ -1077,6 +1078,28 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
                 type="button"
                 disabled={isUploadingComment}
                 title="Send comment"
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  cursor: isUploadingComment ? 'not-allowed' : 'pointer',
+                  opacity: isUploadingComment ? 0.6 : 1,
+                  transition: 'all 0.2s ease',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isUploadingComment) {
+                    e.currentTarget.style.backgroundColor = '#0056b3';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isUploadingComment) {
+                    e.currentTarget.style.backgroundColor = '#007bff';
+                  }
+                }}
               >
                 →
               </button>
