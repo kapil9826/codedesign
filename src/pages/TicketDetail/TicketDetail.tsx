@@ -169,6 +169,52 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
             priority_text_color: matchingTicket.priority_text_color
           };
           setCurrentTicket(transformedTicket);
+          
+          // Load comments from API
+          if (matchingTicket.notes && Array.isArray(matchingTicket.notes)) {
+            const apiComments: Comment[] = matchingTicket.notes.map((note: any, index: number) => ({
+              id: `api-note-${note.id || index}`,
+              author: note.created_by || note.author || 'Agent',
+              message: note.note || note.content || note.message || 'No content',
+              timestamp: note.created_at || note.timestamp || new Date().toISOString(),
+              isAgent: note.is_agent || note.isAgent || true,
+              attachments: note.documents ? note.documents.map((doc: string, docIndex: number) => {
+                let downloadUrl = doc;
+                if (!doc.startsWith('http://') && !doc.startsWith('https://')) {
+                  if (doc.startsWith('/')) {
+                    downloadUrl = `https://portal.bluemiledigital.in${doc}`;
+                  } else if (doc.startsWith('uploads/') || doc.startsWith('files/') || doc.startsWith('documents/')) {
+                    downloadUrl = `https://portal.bluemiledigital.in/${doc}`;
+                  } else {
+                    downloadUrl = `https://portal.bluemiledigital.in/uploads/${doc}`;
+                  }
+                }
+                return {
+                  id: `doc-${index}-${docIndex}`,
+                  name: doc.split('/').pop() || 'Attachment',
+                  size: 'Unknown',
+                  type: doc.split('.').pop() || 'file',
+                  url: downloadUrl
+                };
+              }) : []
+            }));
+            
+            // Merge with local comments
+            const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
+            const localTicketComments = localComments[ticketId] || [];
+            
+            // Combine API and local comments, removing duplicates
+            const allComments = [...apiComments, ...localTicketComments];
+            const uniqueComments = allComments.filter((comment, index, self) => 
+              index === self.findIndex(c => c.id === comment.id)
+            );
+            
+            setComments(uniqueComments);
+            console.log('💬 Loaded comments from API:', apiComments.length, 'local:', localTicketComments.length);
+          } else {
+            // Load only local comments if no API comments
+            loadComments();
+          }
         } else {
           setTicketError('Ticket not found');
         }
@@ -200,7 +246,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     }
   }, [ticketId]);
 
-  // Add comment
+  // Add comment with API call
   const handleAddComment = useCallback(async () => {
     if (!newComment.trim() && selectedFiles.length === 0) {
       alert('Please enter a comment or select a file to attach.');
@@ -210,6 +256,28 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     try {
       setIsUploadingComment(true);
       
+      // Try to add comment to API first
+      let apiSuccess = false;
+      try {
+        console.log('🔄 Adding comment to API...');
+        const result = await ApiService.addTicketNote(ticketId, newComment, selectedFiles);
+        if (result.success) {
+          console.log('✅ Comment added to API successfully');
+          apiSuccess = true;
+        } else {
+          console.log('⚠️ API call failed, trying fallback...');
+          // Try simplified API
+          const simpleResult = await addTicketNoteSimple(ticketId, newComment, selectedFiles);
+          if (simpleResult.success) {
+            console.log('✅ Comment added via simplified API');
+            apiSuccess = true;
+          }
+        }
+      } catch (error) {
+        console.log('❌ API calls failed:', error);
+      }
+      
+      // Create comment object
       const newCommentObj: Comment = {
         id: `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         author: 'You',
@@ -222,7 +290,8 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           size: `${(file.size / 1024).toFixed(1)}KB`,
           type: file.type,
           url: URL.createObjectURL(file)
-        }))
+        })),
+        apiSuccess: apiSuccess
       };
       
       // Add to state
@@ -246,6 +315,10 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       setSelectedFiles([]);
       setShowCommentSuccess(true);
       setTimeout(() => setShowCommentSuccess(false), 3000);
+      
+      if (!apiSuccess) {
+        console.log('⚠️ Comment saved locally but not synced to API');
+      }
       
     } catch (error) {
       console.error('Error adding comment:', error);
