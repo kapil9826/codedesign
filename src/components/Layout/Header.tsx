@@ -185,6 +185,25 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
             Create Ticket
           </button>
 
+          {/* Test button to force show modal */}
+          <button 
+            onClick={() => {
+              console.log('Test button clicked, setting showLogoutConfirm to true');
+              setShowLogoutConfirm(true);
+            }}
+            style={{
+              background: 'red',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              marginLeft: '10px',
+              cursor: 'pointer'
+            }}
+          >
+            TEST MODAL
+          </button>
+
 
           <div className="user-menu">
             <button
@@ -235,6 +254,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
       </div>
       
       {/* Logout Confirmation Modal */}
+      {console.log('About to render modal, showLogoutConfirm:', showLogoutConfirm)}
       {showLogoutConfirm && (
         <div style={{
           position: 'fixed',
