@@ -290,10 +290,34 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     }
   }, [transformTicket]);
 
-  // Initial load
+  // Initial load - try cache first, then API
   useEffect(() => {
-    console.log('🚀 Initial load - fetching tickets');
-    fetchTickets();
+    console.log('🚀 Initial load - checking cache first');
+    
+    // Try to load from cache immediately
+    const cacheKey = 'sidebar-tickets';
+    const cachedTickets = localStorage.getItem(cacheKey);
+    const cacheTimestamp = localStorage.getItem(`${cacheKey}-timestamp`);
+    const now = Date.now();
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+    
+    if (cachedTickets && cacheTimestamp && (now - parseInt(cacheTimestamp)) < CACHE_DURATION) {
+      console.log('🚀 Loading tickets from cache immediately');
+      try {
+        const ticketData = JSON.parse(cachedTickets);
+        setTickets(ticketData.tickets);
+        setTotalTickets(ticketData.totalTickets);
+        setLoading(false);
+        setError('');
+        console.log('✅ Tickets loaded from cache successfully');
+      } catch (error) {
+        console.log('⚠️ Cache parse error, fetching from API:', error);
+        fetchTickets();
+      }
+    } else {
+      console.log('🔄 No valid cache, fetching from API');
+      fetchTickets();
+    }
   }, [fetchTickets]);
 
   // Listen for ticket creation events to refresh the sidebar
@@ -914,6 +938,41 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       }
       localStorage.setItem('currentTicketId', ticketId);
       
+      // Try to find ticket in current tickets list first (faster)
+      const existingTicket = tickets.find(t => t.id === ticketId);
+      if (existingTicket && tickets.length > 0) {
+        console.log('🚀 Found ticket in current list, using it immediately');
+        const transformedTicket = {
+          id: existingTicket.id,
+          title: existingTicket.issue || 'No title',
+          description: existingTicket.description || 'No description available',
+          status: existingTicket.status || 'Active',
+          priority: existingTicket.priority || 'Medium',
+          userName: existingTicket.requester || 'Unknown User',
+          userEmail: 'unknown@example.com',
+          userPhone: 'N/A',
+          createdAt: existingTicket.createdAt || new Date().toISOString(),
+          updatedAt: existingTicket.createdAt || new Date().toISOString(),
+          assignedTo: 'Unassigned',
+          department: 'General',
+          category: 'General',
+          documents: [],
+          notes: [],
+          status_name: existingTicket.status_name,
+          status_bg_color: existingTicket.status_bg_color,
+          status_text_color: existingTicket.status_text_color,
+          priority_name: existingTicket.priority_name,
+          priority_bg_color: existingTicket.priority_bg_color,
+          priority_text_color: existingTicket.priority_text_color
+        };
+        setCurrentTicket(transformedTicket);
+        setTicketLoading(false);
+        console.log('✅ Ticket details loaded from current list');
+        return;
+      }
+      
+      // If not found in current list, fetch from API
+      console.log('🔄 Ticket not in current list, fetching from API...');
       fetchTicketDetails(ticketId);
     } else {
       const fallbackTicket = {
@@ -937,6 +996,26 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       setTicketLoading(false);
     }
   }, [ticketId, fetchTicketDetails]);
+
+  // Load comments immediately from localStorage on mount
+  useEffect(() => {
+    if (ticketId) {
+      console.log('💬 Loading comments from localStorage for ticket:', ticketId);
+      try {
+        const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
+        if (localComments[ticketId] && Array.isArray(localComments[ticketId])) {
+          console.log('💾 Found local comments:', localComments[ticketId].length);
+          setComments(localComments[ticketId]);
+        } else {
+          console.log('💾 No local comments found for this ticket');
+          setComments([]);
+        }
+      } catch (error) {
+        console.log('⚠️ Could not load local comments:', error);
+        setComments([]);
+      }
+    }
+  }, [ticketId]);
 
   // Cleanup effect to clear cache when component unmounts
   useEffect(() => {
