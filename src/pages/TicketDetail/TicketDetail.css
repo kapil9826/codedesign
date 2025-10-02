@@ -676,15 +676,13 @@
   border-radius: 8px;
   flex-shrink: 0;
   min-height: 60px;
-  max-height: 300px; /* Increased height to allow scrolling */
+  max-height: 250px; /* Fixed height for scrolling */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-top: 5px;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Allow vertical scrolling */
-  position: sticky; /* Sticky positioning to stay at bottom */
-  bottom: 0; /* Stick to bottom of viewport */
-  z-index: 100; /* Ensure it's above other content */
+  overflow-y: auto; /* Enable scrolling */
+  position: relative; /* Normal positioning */
 }
 
 /* Custom scrollbar for comment form */
@@ -715,14 +713,14 @@
   flex-direction: column;
   gap: 0;
   position: relative;
-  overflow: visible; /* Allow content to be visible */
+  overflow: hidden;
   background: transparent;
   border: none;
   border-radius: 8px;
   padding: 0;
-  height: auto; /* Allow natural height */
-  flex: 1; /* Allow form to grow */
-  min-height: 0; /* Allow shrinking */
+  height: 100%; /* Take full height of container */
+  flex: 1;
+  min-height: 0;
 }
 
 .comment-textarea {
@@ -758,10 +756,8 @@
   background: #ffffff;
   border-radius: 0 0 8px 8px;
   border-top: 1px solid #e2e8f0;
-  position: sticky; /* Sticky at bottom of scrollable area */
-  bottom: 0; /* Stick to bottom */
-  z-index: 10;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1); /* Add shadow for separation */
+  position: relative; /* Normal positioning */
+  margin-top: auto; /* Push to bottom */
 }
 
 /* Formatting Icons Row */
