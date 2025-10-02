@@ -543,6 +543,13 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
 
   // Optimized add comment handler
   const handleAddComment = useCallback(async () => {
+    console.log('💬 Adding comment with attachments:', {
+      comment: newComment,
+      files: selectedFiles.length,
+      fileNames: selectedFiles.map(f => f.name),
+      fileSizes: selectedFiles.map(f => f.size)
+    });
+    
     if (!newComment.trim() && selectedFiles.length === 0) {
       alert('Please enter a comment or select a file to attach.');
       return;
@@ -629,18 +636,26 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         localStorage.removeItem('cachedTickets');
         localStorage.removeItem('cachedTicketDetails');
         
+        const attachmentData = selectedFiles.map((file, index) => ({
+          id: `attachment-${Date.now()}-${index}`,
+          name: file.name,
+          size: `${(file.size / 1024).toFixed(1)}KB`,
+          type: file.type,
+          url: URL.createObjectURL(file) // Create a local URL for the file
+        }));
+        
+        console.log('📎 Creating comment with attachments:', {
+          attachmentCount: attachmentData.length,
+          attachments: attachmentData.map(a => ({ name: a.name, size: a.size, url: a.url }))
+        });
+        
         const newCommentObj: Comment = {
           id: `local-${Date.now()}`,
           author: 'You',
           message: newComment,
           timestamp: new Date().toISOString(),
           isAgent: false,
-          attachments: selectedFiles.map((file, index) => ({
-            id: `attachment-${Date.now()}-${index}`,
-            name: file.name,
-            size: `${(file.size / 1024).toFixed(1)}KB`,
-            type: file.type
-          }))
+          attachments: attachmentData
         };
         
         setComments(prev => [...prev, newCommentObj]);
@@ -677,18 +692,26 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         }
         
         // Always add the comment locally for better UX
+        const attachmentData = selectedFiles.map((file, index) => ({
+          id: `attachment-${Date.now()}-${index}`,
+          name: file.name,
+          size: `${(file.size / 1024).toFixed(1)}KB`,
+          type: file.type,
+          url: URL.createObjectURL(file) // Create a local URL for the file
+        }));
+        
+        console.log('📎 Creating fallback comment with attachments:', {
+          attachmentCount: attachmentData.length,
+          attachments: attachmentData.map(a => ({ name: a.name, size: a.size, url: a.url }))
+        });
+        
         const newCommentObj: Comment = {
           id: `local-${Date.now()}`,
           author: 'You',
           message: newComment,
           timestamp: new Date().toISOString(),
           isAgent: false,
-          attachments: selectedFiles.map((file, index) => ({
-            id: `attachment-${Date.now()}-${index}`,
-            name: file.name,
-            size: `${(file.size / 1024).toFixed(1)}KB`,
-            type: file.type
-          }))
+          attachments: attachmentData
         };
         
         setComments(prev => [...prev, newCommentObj]);
