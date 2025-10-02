@@ -554,7 +554,7 @@
   flex-direction: column;
   gap: 0.125rem;
   min-height: 0;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 300px); /* Decreased height to give more space to add comment */
   background: #ffffff;
 }
 
@@ -714,8 +714,8 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   flex-shrink: 0;
-  min-height: 60px;
-  max-height: 200px; /* Reduced height to ensure send button is visible */
+  min-height: 80px; /* Increased min height */
+  max-height: 300px; /* Increased max height */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-top: -5px;
   display: flex;
