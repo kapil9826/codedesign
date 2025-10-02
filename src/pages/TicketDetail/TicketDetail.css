@@ -681,11 +681,7 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto; /* Enable scrolling */
-  position: fixed; /* Fixed positioning */
-  bottom: 20px; /* Fixed at bottom with some margin */
-  left: 20px; /* Fixed from left */
-  right: 20px; /* Fixed from right */
-  z-index: 1000; /* High z-index to stay on top */
+  position: relative; /* Normal positioning */
 }
 
 /* Custom scrollbar for comment form */
