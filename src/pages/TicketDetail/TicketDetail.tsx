@@ -843,7 +843,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
             <h1 className="ticket-title">{currentTicket.title}</h1>
             
             <div className="ticket-description">
-              <p>{currentTicket.description}</p>
+              <p>{currentTicket.description || 'No description available'}</p>
             </div>
 
             <div className="ticket-meta">
