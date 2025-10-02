@@ -153,6 +153,24 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         return;
       }
       
+      // Check cache first for faster loading
+      const cacheKey = 'sidebar-tickets';
+      const cachedTickets = localStorage.getItem(cacheKey);
+      const cacheTimestamp = localStorage.getItem(`${cacheKey}-timestamp`);
+      const now = Date.now();
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+      
+      if (cachedTickets && cacheTimestamp && (now - parseInt(cacheTimestamp)) < CACHE_DURATION) {
+        console.log('🚀 Using cached tickets for faster loading');
+        const ticketData = JSON.parse(cachedTickets);
+        setTickets(ticketData.tickets);
+        setTotalTickets(ticketData.totalTickets);
+        setLoading(false);
+        return;
+      }
+      
+      console.log('🔄 Cache miss or expired, fetching from API...');
+      
       // Try to get tickets with a simple API call
       const result = await ApiService.getTickets(false);
       
@@ -185,6 +203,16 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           console.log('✅ Tickets loaded successfully:', {
             ticketsCount: transformedTickets.length
           });
+          
+          // Cache the results for faster future loading
+          const cacheData = {
+            tickets: transformedTickets,
+            totalTickets: transformedTickets.length,
+            timestamp: now
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+          localStorage.setItem(`${cacheKey}-timestamp`, now.toString());
+          console.log('💾 Tickets cached for faster loading');
         } else {
           setTickets([]);
           setError('No tickets found');
@@ -250,7 +278,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       const cachedDetails = localStorage.getItem(cacheKey);
       const cacheTimestamp = localStorage.getItem(`${cacheKey}-timestamp`);
       const now = Date.now();
-      const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes for ticket details
+      const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes for ticket details (faster loading)
       
       if (!forceRefresh && cachedDetails && cacheTimestamp && (now - parseInt(cacheTimestamp)) < CACHE_DURATION) {
         console.log('🚀 Using cached ticket details');
