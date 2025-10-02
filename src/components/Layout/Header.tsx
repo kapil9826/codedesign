@@ -254,8 +254,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
       </div>
       
       {/* Logout Confirmation Modal */}
-      {console.log('About to render modal, showLogoutConfirm:', showLogoutConfirm)}
-      {showLogoutConfirm && (
+      {showLogoutConfirm && createPortal(
         <div style={{
           position: 'fixed',
           top: 0,
@@ -339,7 +338,8 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       
     </header>
