@@ -8,6 +8,10 @@ import { addTicketNoteSimple } from '../../services/api-simple-note';
 import { addCommentWithAttachments } from '../../services/api-attachments';
 import './TicketDetail.css';
 
+// API configuration
+const API_BASE_URL = 'https://portal.bluemiledigital.in';
+const getAuthToken = () => localStorage.getItem('authToken') || '';
+
 interface Ticket {
   id: string;
   requester: string;
@@ -170,49 +174,70 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           };
           setCurrentTicket(transformedTicket);
           
-          // Load comments from API
-          if (matchingTicket.notes && Array.isArray(matchingTicket.notes)) {
-            const apiComments: Comment[] = matchingTicket.notes.map((note: any, index: number) => ({
-              id: `api-note-${note.id || index}`,
-              author: note.created_by || note.author || 'Agent',
-              message: note.note || note.content || note.message || 'No content',
-              timestamp: note.created_at || note.timestamp || new Date().toISOString(),
-              isAgent: note.is_agent || note.isAgent || true,
-              attachments: note.documents ? note.documents.map((doc: string, docIndex: number) => {
-                let downloadUrl = doc;
-                if (!doc.startsWith('http://') && !doc.startsWith('https://')) {
-                  if (doc.startsWith('/')) {
-                    downloadUrl = `https://portal.bluemiledigital.in${doc}`;
-                  } else if (doc.startsWith('uploads/') || doc.startsWith('files/') || doc.startsWith('documents/')) {
-                    downloadUrl = `https://portal.bluemiledigital.in/${doc}`;
-                  } else {
-                    downloadUrl = `https://portal.bluemiledigital.in/uploads/${doc}`;
-                  }
-                }
-                return {
-                  id: `doc-${index}-${docIndex}`,
-                  name: doc.split('/').pop() || 'Attachment',
-                  size: 'Unknown',
-                  type: doc.split('.').pop() || 'file',
-                  url: downloadUrl
-                };
-              }) : []
-            }));
+          // Fetch comments from the dedicated API endpoint
+          try {
+            console.log('🔄 Fetching comments from API for ticket:', ticketId);
+            const commentsResponse = await fetch(`${API_BASE_URL}/apis/get-ticket-comments?support_tickets_id=${ticketId}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+              },
+            });
             
-            // Merge with local comments
-            const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
-            const localTicketComments = localComments[ticketId] || [];
-            
-            // Combine API and local comments, removing duplicates
-            const allComments = [...apiComments, ...localTicketComments];
-            const uniqueComments = allComments.filter((comment, index, self) => 
-              index === self.findIndex(c => c.id === comment.id)
-            );
-            
-            setComments(uniqueComments);
-            console.log('💬 Loaded comments from API:', apiComments.length, 'local:', localTicketComments.length);
-          } else {
-            // Load only local comments if no API comments
+            if (commentsResponse.ok) {
+              const commentsData = await commentsResponse.json();
+              console.log('💬 API Comments response:', commentsData);
+              
+              if (commentsData.status === '1' && commentsData.data && Array.isArray(commentsData.data)) {
+                const apiComments: Comment[] = commentsData.data.map((note: any, index: number) => ({
+                  id: `api-note-${note.id || index}`,
+                  author: note.created_by || 'Agent',
+                  message: note.note || 'No content',
+                  timestamp: note.created_at || new Date().toISOString(),
+                  isAgent: true,
+                  attachments: note.documents ? note.documents.map((doc: string, docIndex: number) => {
+                    let downloadUrl = doc;
+                    if (!doc.startsWith('http://') && !doc.startsWith('https://')) {
+                      if (doc.startsWith('/')) {
+                        downloadUrl = `https://portal.bluemiledigital.in${doc}`;
+                      } else if (doc.startsWith('uploads/') || doc.startsWith('files/') || doc.startsWith('documents/')) {
+                        downloadUrl = `https://portal.bluemiledigital.in/${doc}`;
+                      } else {
+                        downloadUrl = `https://portal.bluemiledigital.in/uploads/${doc}`;
+                      }
+                    }
+                    return {
+                      id: `doc-${index}-${docIndex}`,
+                      name: doc.split('/').pop() || 'Attachment',
+                      size: 'Unknown',
+                      type: doc.split('.').pop() || 'file',
+                      url: downloadUrl
+                    };
+                  }) : []
+                }));
+                
+                // Merge with local comments
+                const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
+                const localTicketComments = localComments[ticketId] || [];
+                
+                // Combine API and local comments, removing duplicates
+                const allComments = [...apiComments, ...localTicketComments];
+                const uniqueComments = allComments.filter((comment, index, self) => 
+                  index === self.findIndex(c => c.id === comment.id)
+                );
+                
+                setComments(uniqueComments);
+                console.log('💬 Loaded comments from API:', apiComments.length, 'local:', localTicketComments.length);
+              } else {
+                console.log('⚠️ No comments found in API response');
+                loadComments();
+              }
+            } else {
+              console.log('❌ Failed to fetch comments from API:', commentsResponse.status);
+              loadComments();
+            }
+          } catch (error) {
+            console.log('❌ Error fetching comments from API:', error);
             loadComments();
           }
         } else {
@@ -318,6 +343,66 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       
       if (!apiSuccess) {
         console.log('⚠️ Comment saved locally but not synced to API');
+      }
+      
+      // Refresh comments from API to show the new comment immediately
+      if (apiSuccess) {
+        console.log('🔄 Refreshing comments from API...');
+        try {
+          const commentsResponse = await fetch(`${API_BASE_URL}/apis/get-ticket-comments?support_tickets_id=${ticketId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${getAuthToken()}`,
+            },
+          });
+          
+          if (commentsResponse.ok) {
+            const commentsData = await commentsResponse.json();
+            if (commentsData.status === '1' && commentsData.data && Array.isArray(commentsData.data)) {
+              const apiComments: Comment[] = commentsData.data.map((note: any, index: number) => ({
+                id: `api-note-${note.id || index}`,
+                author: note.created_by || 'Agent',
+                message: note.note || 'No content',
+                timestamp: note.created_at || new Date().toISOString(),
+                isAgent: true,
+                attachments: note.documents ? note.documents.map((doc: string, docIndex: number) => {
+                  let downloadUrl = doc;
+                  if (!doc.startsWith('http://') && !doc.startsWith('https://')) {
+                    if (doc.startsWith('/')) {
+                      downloadUrl = `https://portal.bluemiledigital.in${doc}`;
+                    } else if (doc.startsWith('uploads/') || doc.startsWith('files/') || doc.startsWith('documents/')) {
+                      downloadUrl = `https://portal.bluemiledigital.in/${doc}`;
+                    } else {
+                      downloadUrl = `https://portal.bluemiledigital.in/uploads/${doc}`;
+                    }
+                  }
+                  return {
+                    id: `doc-${index}-${docIndex}`,
+                    name: doc.split('/').pop() || 'Attachment',
+                    size: 'Unknown',
+                    type: doc.split('.').pop() || 'file',
+                    url: downloadUrl
+                  };
+                }) : []
+              }));
+              
+              // Merge with local comments
+              const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
+              const localTicketComments = localComments[ticketId] || [];
+              
+              // Combine API and local comments, removing duplicates
+              const allComments = [...apiComments, ...localTicketComments];
+              const uniqueComments = allComments.filter((comment, index, self) => 
+                index === self.findIndex(c => c.id === comment.id)
+              );
+              
+              setComments(uniqueComments);
+              console.log('✅ Comments refreshed from API');
+            }
+          }
+        } catch (error) {
+          console.log('⚠️ Could not refresh comments from API:', error);
+        }
       }
       
     } catch (error) {
