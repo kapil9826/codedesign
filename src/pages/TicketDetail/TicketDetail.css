@@ -714,8 +714,8 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   flex-shrink: 0;
-  min-height: 70px; /* Slightly decreased min height */
-  max-height: 250px; /* Decreased max height */
+  min-height: 60px; /* Further decreased min height */
+  max-height: 200px; /* Further decreased max height */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-top: -5px;
   display: flex;
@@ -725,14 +725,14 @@
 }
 .comment-textarea {
   width: 100%;
-  padding: 2rem;
+  padding: 0.75rem; /* Reduced padding */
   border: none;
   border-radius: 8px 8px 0 0;
   font-size: 0.75rem; /* Decreased font size */
   font-family: inherit;
   resize: none;
-  min-height: 2.5rem; /* Reduced min height */
-  max-height: 5rem; /* Reduced max height to save space */
+  min-height: 2rem; /* Further reduced min height */
+  /* max-height: 00px; Reduced max height to save space */
   background: transparent;
   line-height: 1.4;
   outline: none;
@@ -750,8 +750,8 @@
   gap: 0.5rem;
   flex-wrap: nowrap;
   flex-shrink: 0;
-  min-height: 50px;
-  padding: 1rem;
+  min-height: 40px; /* Reduced min height */
+  padding: 0.5rem; /* Reduced padding */
   background: #ffffff;
   border-radius: 0 0 8px 8px;
   border-top: 1px solid #e2e8f0;
