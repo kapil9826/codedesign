@@ -676,13 +676,14 @@
   border-radius: 8px;
   flex-shrink: 0;
   min-height: 60px;
-  max-height: 300px; /* Further increased to accommodate more attachments */
+  max-height: 400px; /* Even more height */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-top: 5px;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Prevent overflow */
+  overflow: visible; /* Allow overflow to show send button */
   position: relative; /* Ensure proper positioning context */
+  z-index: 100; /* Ensure it's above other content */
 }
 
 .add-comment-section h4 {
@@ -694,11 +695,11 @@
   flex-direction: column;
   gap: 0;
   position: relative;
-  overflow: hidden; /* Changed from visible to hidden */
+  overflow: visible; /* Allow overflow to show send button */
   background: transparent;
   border: none;
   border-radius: 8px;
-  padding: 0 0 60px 0; /* Add bottom padding for send button */
+  padding: 0 0 70px 0; /* Increased bottom padding for send button */
   height: 100%;
   flex: 1; /* Allow form to grow */
   min-height: 0; /* Allow shrinking */
@@ -713,8 +714,8 @@
   font-size: 0.875rem;
   font-family: inherit;
   resize: none;
-  min-height: 3rem;
-  max-height: 4rem; /* Reduced to save space */
+  min-height: 2.5rem; /* Reduced min height */
+  max-height: 3rem; /* Further reduced to save space */
   background: transparent;
   line-height: 1.4;
   outline: none;
@@ -732,17 +733,18 @@
   gap: 0.5rem;
   flex-wrap: nowrap;
   flex-shrink: 0;
-  min-height: 24px;
-  padding: 0.75rem 1rem;
+  min-height: 50px; /* Increased height */
+  padding: 1rem; /* Increased padding */
   background: #ffffff;
   border-radius: 0 0 8px 8px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 2px solid #e2e8f0; /* Thicker border */
   position: absolute; /* Absolutely positioned at bottom */
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 10;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1); /* Add shadow for separation */
+  z-index: 200; /* Higher z-index */
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.15); /* Stronger shadow */
+  border: 2px solid #035c62; /* Add colored border to make it more visible */
 }
 
 /* Formatting Icons Row */
@@ -999,7 +1001,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  max-height: 60px; /* Reduced to keep send button visible */
+  max-height: 40px; /* Even more reduced to keep send button visible */
   overflow-y: auto;
   flex-shrink: 0;
   padding: 0.25rem;
