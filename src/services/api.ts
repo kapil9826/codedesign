@@ -793,70 +793,41 @@ export class ApiService {
         hasToken: !!token,
         tokenLength: token?.length || 0,
         formDataKeys: Array.from(formData.keys()),
-        supportTicketsId: databaseId,
+        supportTicketsId: ticketId,
         noteLength: comment.length,
         attachmentsCount: attachments?.length || 0
       });
 
       console.log('🔑 Using auth token:', token);
-      console.log('🌐 API URL:', `${API_BASE_URL}/add-ticket-note`);
+      console.log('🌐 API URL:', `${API_BASE_URL}/apis/add-ticket-note`);
 
-      // Try different authentication approaches
+      // Try the correct API endpoint with proper authentication
       let response;
       
-      // First try with token in URL parameters
       try {
-        response = await fetchWithTimeout(`${API_BASE_URL}/add-ticket-note?access_token=${token}`, {
+        console.log('🔄 Making API call to add ticket note...');
+        response = await fetchWithTimeout(`${API_BASE_URL}/apis/add-ticket-note`, {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
           body: formData,
         }, 15000);
-        console.log('📡 Response with URL token:', response.status);
+        
+        console.log('📡 API Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        });
+        
+        if (response.ok) {
+          console.log('✅ API call successful');
+        } else {
+          console.log('❌ API call failed with status:', response.status);
+        }
       } catch (error) {
-        console.log('❌ Request with URL token failed:', error);
-      }
-      
-      // If that fails, try without Authorization header (like in Postman)
-      if (!response || !response.ok) {
-      try {
-        response = await fetchWithTimeout(`${API_BASE_URL}/add-ticket-note`, {
-          method: 'POST',
-          body: formData,
-        }, 15000);
-        console.log('📡 Response without auth:', response.status);
-      } catch (error) {
-        console.log('❌ Request without auth failed:', error);
-        }
-      }
-      
-      // If that fails, try with token as query parameter
-      if (!response || !response.ok) {
-        console.log('🔄 Trying with token as query parameter...');
-        try {
-          response = await fetchWithTimeout(`${API_BASE_URL}/add-ticket-note?access_token=${token}`, {
-            method: 'POST',
-            body: formData,
-          }, 15000);
-          console.log('📡 Response with query token:', response.status);
-        } catch (error) {
-          console.log('❌ Request with query token failed:', error);
-        }
-      }
-      
-      // If still fails, try with Authorization header
-      if (!response || !response.ok) {
-        console.log('🔄 Trying with Authorization header...');
-        try {
-          response = await fetchWithTimeout(`${API_BASE_URL}/add-ticket-note`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: formData,
-          }, 15000);
-          console.log('📡 Response with auth header:', response.status);
-        } catch (error) {
-          console.log('❌ Request with auth header failed:', error);
-        }
+        console.log('❌ API call error:', error);
+        return { success: false, error: `Network error: ${error.message}` };
       }
 
       if (!response) {
