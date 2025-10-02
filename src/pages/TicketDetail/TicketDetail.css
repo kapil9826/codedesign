@@ -668,21 +668,7 @@
 }
 
 
-.add-comment-section {
-  padding: 0;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  flex-shrink: 0;
-  min-height: 60px;
-  max-height: 200px; /* Reduced height to ensure send button is visible */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-top: -5px;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto; /* Enable scrolling */
-  position: relative; /* Normal positioning */
-}
+
 
 /* Custom scrollbar for comment form */
 .add-comment-section::-webkit-scrollbar {
@@ -716,12 +702,27 @@
   background: transparent;
   border: none;
   border-radius: 8px;
-  padding: 0;
+  padding: 0 0 70px 0; /* Add bottom padding for send button */
   height: 100%; /* Take full height of container */
   flex: 1;
   min-height: 0;
 }
 
+.add-comment-section {
+  padding: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  flex-shrink: 0;
+  min-height: 60px;
+  max-height: 200px; /* Reduced height to ensure send button is visible */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: -5px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Enable scrolling */
+  position: relative; /* Normal positioning */
+}
 .comment-textarea {
   width: 100%;
   padding: 2rem;
@@ -744,18 +745,22 @@
 
 .comment-actions {
   display: flex;
-    justify-content: space-between;
-    align-items: center;
-    /* gap: 0.5rem; */
-    /* flex-wrap: nowrap; */
-    /* flex-shrink: 0; */
-    /* min-height: 50px; */
-    /* padding: 1rem; */
-    background: #ffffff;
-    /* border-radius: 0 0 8px 8px; */
-    /* border-top: 1px solid #e2e8f0; */
-    /* position: relative; */
-    /* margin-top: auto;*/
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  min-height: 50px;
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 0 0 8px 8px;
+  border-top: 1px solid #e2e8f0;
+  position: absolute; /* Absolutely positioned */
+  bottom: 0; /* Stick to bottom of comment form */
+  left: 0; /* Full width */
+  right: 0; /* Full width */
+  z-index: 10; /* Stay on top */
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1); /* Shadow for separation */
 }
 /* Formatting Icons Row */
 .formatting-icons {
