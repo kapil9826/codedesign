@@ -444,7 +444,17 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         }
         
           console.log('💬 Comments loaded:', existingComments.length);
-          setComments(existingComments);
+          
+          // DON'T overwrite existing comments - merge them
+          setComments(prev => {
+            const mergedComments = [...prev, ...existingComments];
+            // Remove duplicates based on ID
+            const uniqueComments = mergedComments.filter((comment, index, self) => 
+              index === self.findIndex(c => c.id === comment.id)
+            );
+            console.log('💬 Merged comments:', uniqueComments.length);
+            return uniqueComments;
+          });
           
           // Cache the ticket details and comments
           const cacheData = {
@@ -561,36 +571,32 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     try {
       setIsUploadingComment(true);
       
-      // PRIORITY: Add comment first without attachments to ensure it works
-      let result;
+      // Try to add comment to API first - this is CRITICAL
+      let result = { success: false, error: 'No API call made' };
+      
       try {
-        console.log('🔄 Adding comment WITHOUT attachments first...');
-        result = await addTicketNoteSimple(ticketId, newComment, []); // Empty array for no attachments
-        console.log('📡 Comment-only API result:', result);
+        console.log('🔄 CRITICAL: Adding comment to API...');
+        console.log('🔍 API Input:', { ticketId, comment: newComment, files: selectedFiles.length });
         
-        // If comment was successful and we have attachments, try to add them separately
-        if (result.success && selectedFiles.length > 0) {
-          console.log('📎 Comment added successfully, now trying to add attachments...');
-          try {
-            const attachmentResult = await addCommentWithAttachments(ticketId, 'File attachment', selectedFiles);
-            console.log('📎 Attachment result:', attachmentResult);
-            // Don't fail the whole operation if attachments fail
-            if (!attachmentResult.success) {
-              console.log('⚠️ Attachments failed but comment was added successfully');
-            }
-          } catch (attachmentError) {
-            console.log('⚠️ Attachment upload failed but comment was added:', attachmentError);
-          }
-        }
-      } catch (error) {
-        console.log('⚠️ Comment-only API failed, trying with attachments...', error);
-        try {
+        // Try the main API service first
+        result = await ApiService.addTicketNote(ticketId, newComment, selectedFiles);
+        console.log('📡 Main API result:', result);
+        
+        if (!result.success) {
+          console.log('⚠️ Main API failed, trying simplified API...');
           result = await addTicketNoteSimple(ticketId, newComment, selectedFiles);
-          console.log('📡 API with attachments result:', result);
-        } catch (fallbackError) {
-          console.log('⚠️ All APIs failed, using fallback...', fallbackError);
-          result = { success: false, error: 'All APIs failed' };
+          console.log('📡 Simplified API result:', result);
         }
+        
+        if (!result.success) {
+          console.log('⚠️ Simplified API failed, trying attachment API...');
+          result = await addCommentWithAttachments(ticketId, newComment, selectedFiles);
+          console.log('📡 Attachment API result:', result);
+        }
+        
+      } catch (error) {
+        console.log('❌ All API calls failed:', error);
+        result = { success: false, error: 'All API calls failed' };
       }
       
       // If the main API fails, try a simpler approach
@@ -652,72 +658,61 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       
       console.log('🔍 Add comment result:', result);
       
+      // ALWAYS add comment locally regardless of API success
+      console.log('💬 Adding comment locally (regardless of API result)...');
+      
+      const attachmentData = selectedFiles.map((file, index) => ({
+        id: `attachment-${Date.now()}-${index}`,
+        name: file.name,
+        size: `${(file.size / 1024).toFixed(1)}KB`,
+        type: file.type,
+        url: URL.createObjectURL(file) // Create a local URL for the file
+      }));
+      
+      console.log('📎 Creating comment with attachments:', {
+        attachmentCount: attachmentData.length,
+        attachments: attachmentData.map(a => ({ name: a.name, size: a.size, url: a.url }))
+      });
+      
+      const newCommentObj: Comment = {
+        id: `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // More unique ID
+        author: 'You',
+        message: newComment,
+        timestamp: new Date().toISOString(),
+        isAgent: false,
+        attachments: attachmentData,
+        apiSuccess: result.success // Track if API call was successful
+      };
+      
+      // Add comment to state immediately
+      setComments(prev => [...prev, newCommentObj]);
+      console.log('✅ Comment added to state');
+      
+      // Save comment to localStorage for persistence
+      try {
+        const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
+        if (!localComments[ticketId]) {
+          localComments[ticketId] = [];
+        }
+        localComments[ticketId].push(newCommentObj);
+        localStorage.setItem('localComments', JSON.stringify(localComments));
+        console.log('💾 Comment saved to localStorage for persistence');
+      } catch (error) {
+        console.log('⚠️ Could not save comment to localStorage:', error);
+      }
+      
+      setNewComment('');
+      setSelectedFiles([]);
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      // Show success message
+      setShowCommentSuccess(true);
+      
       if (result.success) {
         console.log('✅ Comment added successfully via API');
-        
-        // DON'T clear cache - let comments persist
-        // ApiService.clearCache();
-        
-        // DON'T clear localStorage - let comments persist
-        // localStorage.removeItem('cachedTickets');
-        // localStorage.removeItem('cachedTicketDetails');
-        
-        const attachmentData = selectedFiles.map((file, index) => ({
-          id: `attachment-${Date.now()}-${index}`,
-          name: file.name,
-          size: `${(file.size / 1024).toFixed(1)}KB`,
-          type: file.type,
-          url: URL.createObjectURL(file) // Create a local URL for the file
-        }));
-        
-        console.log('📎 Creating comment with attachments:', {
-          attachmentCount: attachmentData.length,
-          attachments: attachmentData.map(a => ({ name: a.name, size: a.size, url: a.url }))
-        });
-        
-        const newCommentObj: Comment = {
-          id: `local-${Date.now()}`,
-          author: 'You',
-          message: newComment,
-          timestamp: new Date().toISOString(),
-          isAgent: false,
-          attachments: attachmentData
-        };
-        
-        setComments(prev => [...prev, newCommentObj]);
-        
-        // Save comment to localStorage for persistence
-        try {
-          const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
-          if (!localComments[ticketId]) {
-            localComments[ticketId] = [];
-          }
-          localComments[ticketId].push(newCommentObj);
-          localStorage.setItem('localComments', JSON.stringify(localComments));
-          console.log('💾 Comment saved to localStorage for persistence');
-        } catch (error) {
-          console.log('⚠️ Could not save comment to localStorage:', error);
-        }
-        
-        setNewComment('');
-        setSelectedFiles([]);
-        
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        
-        // Show success message
-        setShowCommentSuccess(true);
-        
-        // DON'T force refresh - let comments stay visible
-        // setTimeout(async () => {
-        //   try {
-        //     await fetchTicketDetails(ticketId, true); // Force refresh
-        //   } catch (error) {
-        //     console.log('⚠️ Error refreshing ticket details after comment:', error);
-        //   }
-        // }, 1000);
-        
       } else {
         console.error('❌ Failed to add comment:', result.error);
         
