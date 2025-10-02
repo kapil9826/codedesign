@@ -735,10 +735,7 @@ export class ApiService {
         return { success: false, error: 'Authentication token not found' };
       }
       
-      // Add authentication token as form field
-      formData.append('access_token', token);
-      formData.append('token', token);
-      formData.append('auth_token', token);
+      // Note: access_token is passed in URL, not in form data
       
       // Add attachments if provided
       if (attachments && attachments.length > 0) {
@@ -799,18 +796,15 @@ export class ApiService {
       });
 
       console.log('🔑 Using auth token:', token);
-      console.log('🌐 API URL:', `${API_BASE_URL}/apis/add-ticket-note`);
+      console.log('🌐 API URL:', `${API_BASE_URL}/add-ticket-note?access_token=${token}`);
 
       // Try the correct API endpoint with proper authentication
       let response;
       
       try {
         console.log('🔄 Making API call to add ticket note...');
-        response = await fetchWithTimeout(`${API_BASE_URL}/apis/add-ticket-note`, {
+        response = await fetchWithTimeout(`${API_BASE_URL}/add-ticket-note?access_token=${token}`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
           body: formData,
         }, 15000);
         
