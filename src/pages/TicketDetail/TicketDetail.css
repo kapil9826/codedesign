@@ -960,7 +960,7 @@
   text-align: center;
   padding: 0.5rem;
   color: #6b7280;
-  font-style: italic;
+  font-style: normal;
 }
 
 .no-attachments p {
@@ -1643,7 +1643,7 @@
   justify-content: center;
   height: 200px;
   color: #64748b;
-  font-style: italic;
+  font-style: normal;
 }
 
 /* Retry button */
