@@ -676,7 +676,7 @@
   border-radius: 8px;
   flex-shrink: 0;
   min-height: 60px;
-  max-height: 250px; /* Fixed height for scrolling */
+  max-height: 200px; /* Reduced height to ensure send button is visible */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-top: 5px;
   display: flex;
@@ -732,8 +732,8 @@
   font-size: 0.875rem;
   font-family: inherit;
   resize: none;
-  min-height: 3rem; /* Reasonable min height */
-  max-height: 4rem; /* Reasonable max height */
+  min-height: 2.5rem; /* Reduced min height */
+  max-height: 3rem; /* Reduced max height to save space */
   background: transparent;
   line-height: 1.4;
   outline: none;
@@ -1014,7 +1014,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  max-height: 100px; /* Increased height for better scrolling */
+  max-height: 60px; /* Reduced height to ensure send button is visible */
   overflow-y: auto;
   flex-shrink: 0;
   padding: 0.25rem;
