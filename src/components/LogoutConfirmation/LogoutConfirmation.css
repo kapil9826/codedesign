@@ -1,16 +1,18 @@
 /* Logout Confirmation Modal Styles */
 .logout-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(2px);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2147483647 !important;
+  backdrop-filter: blur(2px) !important;
+  width: 100vw !important;
+  height: 100vh !important;
 }
 
 .logout-modal {
@@ -22,6 +24,8 @@
   max-height: 90vh;
   overflow: hidden;
   animation: modalSlideIn 0.3s ease-out;
+  position: relative;
+  z-index: 2147483647 !important;
 }
 
 @keyframes modalSlideIn {
