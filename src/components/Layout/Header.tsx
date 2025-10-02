@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import CreateTicketModal from '../CreateTicketModal/CreateTicketModal';
-import LogoutConfirmation from '../LogoutConfirmation/LogoutConfirmation';
 import logoImage from '../../assets/logo.webp';
 import ApiService from '../../services/api';
 import './Header.css';
@@ -236,12 +235,92 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
       </div>
       
       {/* Logout Confirmation Modal */}
-      {console.log('Rendering LogoutConfirmation with showLogoutConfirm:', showLogoutConfirm)}
-      <LogoutConfirmation
-        isOpen={showLogoutConfirm}
-        onConfirm={handleLogoutConfirm}
-        onCancel={handleLogoutCancel}
-      />
+      {showLogoutConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999999,
+          width: '100vw',
+          height: '100vh'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                margin: '0 auto 16px auto',
+                background: '#f8f9fa',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#6c757d'
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16,17 21,12 16,7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+              </div>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>
+                Sign Out Confirmation
+              </h3>
+              <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#6c757d' }}>
+                Are you sure you want to log out? Click 'Yes' to confirm or 'No' to stay logged in.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={handleLogoutCancel}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  border: '1px solid #e9ecef',
+                  background: '#f8f9fa',
+                  color: '#6c757d',
+                  minWidth: '100px'
+                }}
+              >
+                No, Cancel
+              </button>
+              <button
+                onClick={handleLogoutConfirm}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  border: '1px solid #20c997',
+                  background: '#20c997',
+                  color: 'white',
+                  minWidth: '100px'
+                }}
+              >
+                Yes, I'm sure
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
     </header>
   );
