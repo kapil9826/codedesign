@@ -303,8 +303,8 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
-                  border: '1px solid #20c997',
-                  background: '#20c997',
+                  border: '1px solid black',
+                  background: 'rgb(9, 93, 99)',
                   color: 'white',
                   minWidth: '100px'
                 }}
