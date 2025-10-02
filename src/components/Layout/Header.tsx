@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import CreateTicketModal from '../CreateTicketModal/CreateTicketModal';
+import LogoutConfirmation from '../LogoutConfirmation/LogoutConfirmation';
 import logoImage from '../../assets/logo.webp';
 import ApiService from '../../services/api';
 import './Header.css';
@@ -17,10 +18,6 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // Debug showLogoutConfirm state changes
-  useEffect(() => {
-    console.log('showLogoutConfirm state changed to:', showLogoutConfirm);
-  }, [showLogoutConfirm]);
   // Initialize with user data from localStorage if available
   const getInitialUserName = () => {
     try {
@@ -131,22 +128,8 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
   }, []);
 
   const handleLogoutClick = () => {
-    console.log('handleLogoutClick called');
-    console.log('Setting showLogoutConfirm to true');
     setShowUserMenu(false); // Close user menu when showing confirmation
-    
-    // Fallback: Use browser confirm if modal doesn't work
-    const shouldLogout = window.confirm('Are you sure you want to log out?');
-    if (shouldLogout) {
-      console.log('User confirmed logout via browser confirm');
-      handleLogoutConfirm();
-    } else {
-      console.log('User cancelled logout');
-    }
-    
-    // Also try to show the modal (in case it works)
     setShowLogoutConfirm(true);
-    console.log('showLogoutConfirm state should be true now');
   };
 
   const handleLogoutConfirm = async () => {
@@ -225,7 +208,6 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Logout button clicked');
                     handleLogoutClick();
                   }}
                   className="dropdown-item logout"
@@ -246,42 +228,11 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onCreateTicket }) => {
       </div>
       
       {/* Logout Confirmation Modal */}
-      {console.log('showLogoutConfirm state:', showLogoutConfirm)}
-      {showLogoutConfirm && (
-        <div className="logout-confirmation-overlay">
-          <div className="logout-confirmation-modal">
-            <div className="logout-confirmation-header">
-              <div className="logout-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16,17 21,12 16,7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-              </div>
-              <h3>Sign Out Confirmation</h3>
-            </div>
-            <div className="logout-confirmation-body">
-              <p>Are you sure you want to log out? Click 'Yes' to confirm or 'No' to stay logged in.</p>
-            </div>
-            <div className="logout-confirmation-actions">
-              <button 
-                className="logout-cancel-btn"
-                onClick={handleLogoutCancel}
-                disabled={isLoggingOut}
-              >
-                No, Cancel
-              </button>
-              <button 
-                className="logout-confirm-btn"
-                onClick={handleLogoutConfirm}
-                disabled={isLoggingOut}
-              >
-                {isLoggingOut ? 'Logging out...' : "Yes, I'm sure"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LogoutConfirmation
+        isOpen={showLogoutConfirm}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+      />
       
     </header>
   );
