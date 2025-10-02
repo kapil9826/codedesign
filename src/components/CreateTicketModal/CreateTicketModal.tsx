@@ -116,6 +116,28 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
     }));
   };
 
+  // Allowed file types and size limit
+  const ALLOWED_FILE_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'text/plain',
+    'application/zip',
+    'application/x-rar-compressed'
+  ];
+  
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+  const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.txt', '.zip', '.rar'];
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only process files from the create ticket file input
     if (e.target.id !== 'create-ticket-file-input') {
@@ -135,6 +157,37 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
     
     if (newFilesCount > 2) {
       const errorMsg = 'You can only select up to 2 files at once.';
+      setError(errorMsg);
+      return;
+    }
+    
+    // Validate file types and sizes
+    const invalidFiles = [];
+    const oversizedFiles = [];
+    
+    for (const file of files) {
+      // Check file type
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      const isValidType = ALLOWED_FILE_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.includes(fileExtension);
+      
+      if (!isValidType) {
+        invalidFiles.push(file.name);
+      }
+      
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        oversizedFiles.push(file.name);
+      }
+    }
+    
+    if (invalidFiles.length > 0) {
+      const errorMsg = `Invalid file types: ${invalidFiles.join(', ')}. Allowed types: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT, ZIP, RAR`;
+      setError(errorMsg);
+      return;
+    }
+    
+    if (oversizedFiles.length > 0) {
+      const errorMsg = `Files too large: ${oversizedFiles.join(', ')}. Maximum file size is 10MB.`;
       setError(errorMsg);
       return;
     }
@@ -368,7 +421,10 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
             <h3>Attachments</h3>
             <div className="attachment-info">
               <p className="attachment-limit-message">
-                <CgAttachment /> You can upload up to 2 attachments (Maximum 2 files allowed)
+                <CgAttachment /> You can upload up to 2 attachments (Max 10MB each)
+              </p>
+              <p className="attachment-types-message">
+                Allowed types: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT, ZIP, RAR
               </p>
             </div>
             <div className="form-group">
@@ -380,7 +436,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
                 className="file-input"
                 id="create-ticket-file-input"
                 disabled={attachments.length >= 2}
-                accept="*/*"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.txt,.zip,.rar"
               />
               <label 
                 htmlFor="create-ticket-file-input" 

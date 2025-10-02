@@ -410,10 +410,63 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     }
   }, [newComment, selectedFiles, ticketId]);
 
+  // File restrictions
+  const ALLOWED_FILE_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'text/plain',
+    'application/zip',
+    'application/x-rar-compressed'
+  ];
+  
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+  const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.txt', '.zip', '.rar'];
+
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      
+      // Validate file types and sizes
+      const invalidFiles = [];
+      const oversizedFiles = [];
+      
+      for (const file of files) {
+        // Check file type
+        const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+        const isValidType = ALLOWED_FILE_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.includes(fileExtension);
+        
+        if (!isValidType) {
+          invalidFiles.push(file.name);
+        }
+        
+        // Check file size
+        if (file.size > MAX_FILE_SIZE) {
+          oversizedFiles.push(file.name);
+        }
+      }
+      
+      if (invalidFiles.length > 0) {
+        alert(`Invalid file types: ${invalidFiles.join(', ')}. Allowed types: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT, ZIP, RAR`);
+        return;
+      }
+      
+      if (oversizedFiles.length > 0) {
+        alert(`Files too large: ${oversizedFiles.join(', ')}. Maximum file size is 10MB.`);
+        return;
+      }
+      
+      setSelectedFiles(files);
     }
   };
 
@@ -708,12 +761,12 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
                   ref={fileInputRef}
                   style={{ display: 'none' }}
                   id="file-input"
-                  accept="*/*"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.txt,.zip,.rar"
                 />
                 <label 
                   htmlFor="file-input" 
                   className="formatting-icon"
-                  title="Attach files"
+                  title="Attach files (Max 10MB each) - PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT, ZIP, RAR"
                 >
                   <CgAttachment />
                 </label>
