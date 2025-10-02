@@ -1,68 +1,112 @@
-/* Login Container - Professional Clean Design */
+/* Login Container - Clean Background */
 .login-container {
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #035c62 0%, #024a4f 50%, #013a3e 100%);
-  padding: 16px;
+  background: url('./backgroundimage.jpg') center/cover no-repeat;
+  background-attachment: fixed;
+  padding: 20px;
   position: relative;
-  overflow: hidden;
 }
 
-/* Removed excessive animations for clean design */
-
-/* Clean background overlay */
-.login-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-/* Removed all floating animations for clean design */
-
-/* Professional Login Card */
+/* Login Card - Exact white rectangle */
 .login-card {
-  width: 360px;
+  width: 380px;
   background: white;
   border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   position: relative;
   z-index: 10;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
+  /* Animation fallback */
+  transform: translateY(-100px);
+  opacity: 0;
+  transition: all 0.8s ease-out;
+}
+
+/* Animated state for login card */
+.login-card.animate {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
-.login-logo {
-  margin-bottom: 12px;
+/* Welcome text styling */
+.welcome-text {
+  margin-top: 16px;
 }
 
 .login-title {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
-  font-family: 'Inter', sans-serif;
   color: #2d3748;
-  margin: 0 0 8px 0;
-  text-align: center;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 8px;
 }
 
 .login-subtitle {
-  color: #718096;
-  font-size: 12px;
-  margin: 0 0 20px 0;
+  font-size: 14px;
   font-weight: 400;
+  color: #718096;
   font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+/* Logo styling - display the black logo image */
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.login-logo img {
+  width: 100%;
+    height: 43px;
+  object-fit: contain;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* Company name styling */
+.company-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 4px;
   text-align: center;
 }
+
+/* Consultants text with underline */
+.company-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: #718096;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 0;
+  position: relative;
+  text-align: center;
+}
+
+.company-subtitle::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 2px;
+  background: #48cfd5;
+}
+
+/* Removed welcome text styling - not used in clean design */
 
 .login-form {
   position: relative;
@@ -75,191 +119,110 @@
   z-index: 12;
 }
 
-.simple-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 13px;
-  font-family: 'Inter', sans-serif;
-  background: white;
-  color: #2d3748;
-  outline: none;
-  transition: border-color 0.2s ease;
-  box-sizing: border-box;
-  position: relative;
-  z-index: 13;
-  height: 40px;
-}
-
-.simple-input:focus {
-  border-color: #035c62;
-  box-shadow: 0 0 0 2px rgba(3, 92, 98, 0.1);
-}
-
-.simple-input::placeholder {
-  color: #9ca3af;
-  font-size: 13px;
-}
-
-.input-container {
-  position: relative;
+/* EXACT match to image - labels with icons to the left */
+.exact-label {
   display: flex;
   align-items: center;
-  width: 100%;
-}
-
-.input-field {
-  display: flex;
-  align-items: center;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 0.75rem;
-  width: 100%;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  cursor: text;
-  min-height: 44px;
-}
-
-.input-field:focus-within {
-  border-color: #48cfd5;
-  box-shadow: 0 0 0 3px rgba(72, 207, 213, 0.1);
-}
-
-.input-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #2d3748;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-}
-
-.input-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.input-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #2d3748;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.login-input {
-  width: 100%;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  font-size: 0.875rem;
-  transition: all 0.3s ease;
-  background: transparent;
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  color: #2d3748;
-  outline: none;
-  line-height: 1.2;
-}
-
-.login-input:focus {
-  outline: none;
-}
-
-.password-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #2d3748;
-  cursor: pointer;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-}
-
-.forgot-password {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  justify-content: center;
-}
-
-.forgot-password-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-}
-
-.forgot-password-link {
-  color: #2d3748;
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.forgot-password-link:hover {
-  color: #48cfd5;
-  text-decoration: underline;
-}
-
-.login-input::placeholder {
-  color: #9ca3af;
-  font-style: normal;
-  font-size: 0.875rem;
-  line-height: 1.2;
-}
-
-.login-button {
-  width: 100%;
-  padding: 12px 16px;
-  background: #035c62;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
   font-family: 'Inter', sans-serif;
-  position: relative;
-  box-sizing: border-box;
-  height: 40px;
-  margin: 20px 0 0 0;
-  z-index: 13;
 }
 
-.login-button:hover:not(:disabled) {
-  background: #024a4f;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(3, 92, 98, 0.3);
+.exact-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
 }
 
-.login-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+.exact-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
-.login-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(3, 92, 98, 0.2);
+/* EXACT input fields from image */
+.login-container .exact-input,
+.exact-input {
+  width: 100% !important;
+  padding: 12px 16px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-family: 'Inter', sans-serif !important;
+  background: white !important;
+  color: #374151 !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+  box-sizing: border-box !important;
+  height: 44px !important;
+  font-weight: 400 !important;
+  margin: 0 !important;
 }
 
-.login-button:active {
-  transform: translateY(0px);
-  box-shadow: 0 2px 8px rgba(3, 92, 98, 0.2);
+.login-container .exact-input:focus,
+.exact-input:focus {
+  border-color: #1A6B70 !important;
+  box-shadow: 0 0 0 2px rgba(26, 107, 112, 0.1) !important;
+}
+
+.login-container .exact-input::placeholder,
+.exact-input::placeholder {
+  color: #9ca3af !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  }
+
+/* EXACT button from image - full width teal */
+.login-container .modern-button,
+.modern-button {
+  width: 111px !important;
+  margin: auto !important;
+  background: #1A6B70 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+  height: 34px !important;
+  z-index: 13 !important;
+}
+
+.login-container .modern-button:hover:not(:disabled),
+.modern-button:hover:not(:disabled) {
+  background: #1E7A80 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(26, 107, 112, 0.3) !important;
+}
+
+.login-container .modern-button:disabled,
+.modern-button:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.login-container .modern-button:focus,
+.modern-button:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(26, 107, 112, 0.2) !important;
+}
+
+.login-container .modern-button:active,
+.modern-button:active {
+  transform: translateY(0px) !important;
+  box-shadow: 0 2px 8px rgba(26, 107, 112, 0.2) !important;
 }
 
 .loading-spinner {
@@ -287,84 +250,28 @@
   border: 1px solid #feb2b2;
 }
 
-.login-footer {
-  text-align: center;
-  padding-top: 0.25rem;
-  margin-top: 0.25rem;
-  border-top: 1px solid #e2e8f0;
-}
-
-.copyright {
-  font-size: 0.5rem;
-  color: #9ca3af;
-  margin: 0;
-}
-
-.highlight {
-  color: #48cfd5;
-  font-weight: 600;
-}
-
-.demo-credentials {
-  color: #718096;
-  font-size: 0.625rem;
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-}
-
-/* Logo styling */
-.logo-icon {
-  width: 60px;
-  height: 60px;
-  background: #48cfd5;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  margin: 0 auto 1rem auto;
-  font-family: 'Inter', sans-serif;
-}
-
-.logo-image {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  margin: 0 auto 12px auto;
-  display: block;
-}
-
-
 /* Responsive design */
 @media (max-width: 768px) {
   .login-card {
     width: 320px;
-    padding: 20px;
+    padding: 24px;
   }
   
   .login-title {
-    font-size: 16px;
+    font-size: 20px;
   }
   
   .login-subtitle {
-    font-size: 11px;
+    font-size: 13px;
   }
   
-  .simple-input {
-    font-size: 12px;
-    height: 36px;
+  .exact-input {
+    font-size: 13px;
+    height: 40px;
   }
   
-  .login-button {
-    font-size: 12px;
-    height: 36px;
-  }
-  
-  .logo-image {
-    width: 40px;
+  .modern-button {
+    font-size: 13px;
     height: 40px;
   }
 }

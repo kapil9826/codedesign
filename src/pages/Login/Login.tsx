@@ -12,6 +12,7 @@ const Login: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
 
   // Check if user is already authenticated on component mount
   useEffect(() => {
@@ -21,6 +22,11 @@ const Login: React.FC = () => {
     if (isAuth) {
       window.location.href = '/tickets';
     }
+    
+    // Trigger animation
+    setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
     
     // Ensure form elements are properly initialized
     setTimeout(() => {
@@ -144,49 +150,78 @@ const Login: React.FC = () => {
       {/* Clean professional background */}
       
       <div className="">
-        <div className="login-card" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className={`login-card ${isVisible ? 'animate' : ''}`}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            transform: isVisible ? 'translateY(0)' : 'translateY(-100px)',
+            opacity: isVisible ? 1 : 0,
+            transition: 'all 0.8s ease-out'
+          }}
+        >
           <div className="login-header">
             <div className="login-logo">
               <img 
                 src={logoImage} 
-                alt="Helpdesk Logo" 
+                alt="Code n Design Consultants Logo" 
                 className="logo-image"
               />
             </div>
-            <h1 className="login-title">Welcome Back!</h1>
-            <p className="login-subtitle">Enter your information to access your account.</p>
+            <div className="welcome-text">
+              <h2 className="login-title">Welcome Back</h2>
+              <p className="login-subtitle">Enter your information to access your account</p>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="login-form">
             {error && <div className="error-message">{error}</div>}
 
             <div className="form-group">
+              <label className="exact-label">
+                <span className="exact-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </span>
+                Email Address
+              </label>
               <input
-                type="text"
+                type="email"
                 name="username"
-                placeholder="Username"
+                placeholder="Enter email address"
                 value={formData.username}
                 onChange={handleInputChange}
                 required
-                className="simple-input"
+                className="exact-input"
                 autoComplete="username"
               />
             </div>
 
             <div className="form-group">
+              <label className="exact-label">
+                <span className="exact-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <circle cx="12" cy="16" r="1"></circle>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+                Password
+              </label>
               <input
                 type="password"
                 name="password"
-                placeholder="Password"
+                placeholder="Enter password"
                 value={formData.password}
                 onChange={handleInputChange}
                 required
-                className="simple-input"
+                className="exact-input"
                 autoComplete="current-password"
               />
             </div>
 
-            <button type="submit" disabled={isLoading} className={`login-button ${isLoading ? 'loading' : ''}`}>
+            <button type="submit" disabled={isLoading} className={`modern-button ${isLoading ? 'loading' : ''}`}>
               {isLoading ? (
                 <>
                   <div className="loading-spinner"></div>
@@ -196,8 +231,6 @@ const Login: React.FC = () => {
                 'Log In'
               )}
             </button>
-
-         
           </form>
 
          
