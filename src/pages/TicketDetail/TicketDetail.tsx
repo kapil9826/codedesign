@@ -219,14 +219,21 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
   // Listen for ticket creation events to refresh the sidebar
   useEffect(() => {
     const handleTicketCreated = () => {
-      console.log('Ticket created event received, refreshing sidebar tickets...');
+      console.log('🎫 Ticket created event received, refreshing sidebar tickets immediately...');
+      fetchTickets();
+    };
+
+    const handleRefreshTickets = () => {
+      console.log('🔄 Manual refresh triggered in sidebar');
       fetchTickets();
     };
 
     window.addEventListener('ticketCreated', handleTicketCreated);
+    window.addEventListener('refreshTickets', handleRefreshTickets);
     
     return () => {
       window.removeEventListener('ticketCreated', handleTicketCreated);
+      window.removeEventListener('refreshTickets', handleRefreshTickets);
     };
   }, [fetchTickets]);
 

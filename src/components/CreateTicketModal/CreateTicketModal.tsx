@@ -260,12 +260,13 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
         window.dispatchEvent(event);
         console.log('🎫 ticketCreated event dispatched successfully');
         
-        // Add a small delay to ensure the event is processed before modal closes
+        // Immediate fallback refresh event
+        window.dispatchEvent(new CustomEvent('refreshTickets'));
+        
+        // Add minimal delay for event processing
         setTimeout(() => {
           console.log('🎫 Event dispatch completed, modal can close');
-          // Fallback: dispatch a generic refresh event
-          window.dispatchEvent(new CustomEvent('refreshTickets'));
-        }, 100);
+        }, 50);
         
         // Reset form
         setFormData({

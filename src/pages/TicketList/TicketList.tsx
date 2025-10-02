@@ -112,7 +112,7 @@ const TicketList: React.FC = () => {
     }
   };
 
-  const fetchTickets = async (isRetry: boolean = false) => {
+  const fetchTickets = async (isRetry: boolean = false, forceRefresh: boolean = false) => {
     if (isRetry) {
       setIsRetrying(true);
       setRetryCount(prev => prev + 1);
@@ -123,7 +123,8 @@ const TicketList: React.FC = () => {
     
     // Use API data instead of mock data
     try {
-      const result = await ApiService.getTickets();
+      console.log('🔄 Fetching tickets...', forceRefresh ? '(force refresh - no cache)' : '(with cache)');
+      const result = await ApiService.getTickets(!forceRefresh);
       
       if (result.success && result.data && result.data.status === '1' && result.data.data) {
         // Process API data directly
@@ -271,13 +272,15 @@ const TicketList: React.FC = () => {
   useEffect(() => {
     const handleTicketCreated = (event: any) => {
       console.log('🎫 Ticket created event received in TicketList:', event);
-      console.log('🎫 Refreshing ticket list...');
-      fetchTickets();
+      console.log('🎫 Refreshing ticket list immediately...');
+      // Force immediate refresh without cache
+      fetchTickets(false, true);
     };
 
     const handleRefreshTickets = () => {
-      console.log('🔄 Manual refresh triggered');
-      fetchTickets();
+      console.log('🔄 Manual refresh triggered - immediate refresh');
+      // Force immediate refresh without cache
+      fetchTickets(false, true);
     };
 
     console.log('🎫 Adding ticketCreated event listener to TicketList');
