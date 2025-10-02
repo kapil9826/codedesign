@@ -4,6 +4,7 @@ import SkeletonLoader from '../../components/SkeletonLoader/SkeletonLoader';
 import CommentLoader from '../../components/CommentLoader/CommentLoader';
 import CommentSuccess from '../../components/CommentSuccess/CommentSuccess';
 import ApiService from '../../services/api';
+import { addTicketNoteSimple } from '../../services/api-simple-note';
 import './TicketDetail.css';
 
 interface Ticket {
@@ -323,36 +324,51 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         }
       }
       
-      const result = await ApiService.getTicketDetails(databaseId);
+      // Try to get ticket details from the tickets list first (simpler approach)
+      const ticketsResult = await ApiService.getTickets();
       
-      if (result.success && result.data && result.data.status === '1') {
-        const ticketData = result.data.data;
+      if (ticketsResult.success && ticketsResult.data && ticketsResult.data.data) {
+        let apiTickets = [];
+        if (Array.isArray(ticketsResult.data.data)) {
+          apiTickets = ticketsResult.data.data;
+        } else if (ticketsResult.data.data && typeof ticketsResult.data.data === 'object' && Array.isArray(ticketsResult.data.data.data)) {
+          apiTickets = ticketsResult.data.data.data;
+        }
         
-        const transformedTicket = {
-          id: ticketData.ticket_number || ticketData.id || ticketId,
-          title: ticketData.title || 'No title',
-          description: ticketData.description || 'No description available',
-          status: ticketData.status || 'Active',
-          priority: ticketData.priority || 'Medium',
-          userName: ticketData.user_name || 'Unknown User',
-          userEmail: ticketData.user_email || 'unknown@example.com',
-          userPhone: ticketData.user_phone || 'N/A',
-          createdAt: ticketData.created_at || new Date().toISOString(),
-          updatedAt: ticketData.updated_at || new Date().toISOString(),
-          assignedTo: ticketData.assigned_to || 'Unassigned',
-          department: ticketData.department || 'General',
-          category: ticketData.category || 'General',
-          documents: ticketData.documents || [],
-          notes: ticketData.notes || [],
-          status_name: ticketData.status_name,
-          status_bg_color: ticketData.status_bg_color,
-          status_text_color: ticketData.status_text_color,
-          priority_name: ticketData.priority_name,
-          priority_bg_color: ticketData.priority_bg_color,
-          priority_text_color: ticketData.priority_text_color
-        };
+        const matchingTicket = apiTickets.find((ticket: any) => {
+          return ticket.ticket_number === ticketId || ticket.id === ticketId;
+        });
         
-        setCurrentTicket(transformedTicket);
+        if (matchingTicket) {
+          console.log('✅ Found matching ticket:', matchingTicket);
+          const ticketData = matchingTicket;
+        
+          const transformedTicket = {
+            id: ticketData.ticket_number || ticketData.id || ticketId,
+            title: ticketData.title || 'No title',
+            description: ticketData.description || 'No description available',
+            status: ticketData.status_name || ticketData.status || 'Active',
+            priority: ticketData.priority_name || ticketData.priority || 'Medium',
+            userName: ticketData.user_name || 'Unknown User',
+            userEmail: ticketData.user_email || 'unknown@example.com',
+            userPhone: ticketData.user_phone || 'N/A',
+            createdAt: ticketData.created_at || new Date().toISOString(),
+            updatedAt: ticketData.updated_at || new Date().toISOString(),
+            assignedTo: ticketData.assigned_to || 'Unassigned',
+            department: ticketData.department || 'General',
+            category: ticketData.category || 'General',
+            documents: ticketData.documents || [],
+            notes: ticketData.notes || [],
+            status_name: ticketData.status_name,
+            status_bg_color: ticketData.status_bg_color,
+            status_text_color: ticketData.status_text_color,
+            priority_name: ticketData.priority_name,
+            priority_bg_color: ticketData.priority_bg_color,
+            priority_text_color: ticketData.priority_text_color
+          };
+          
+          console.log('✅ Transformed ticket:', transformedTicket);
+          setCurrentTicket(transformedTicket);
         
         // Optimized comment loading
         let existingComments: Comment[] = [];
@@ -424,17 +440,23 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
           console.log('⚠️ Could not load local comments:', error);
         }
         
-        setComments(existingComments);
-        
-        // Cache the ticket details and comments
-        const cacheData = {
-          ticket: transformedTicket,
-          comments: existingComments
-        };
-        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-        localStorage.setItem(`${cacheKey}-timestamp`, now.toString());
+          console.log('💬 Comments loaded:', existingComments.length);
+          setComments(existingComments);
+          
+          // Cache the ticket details and comments
+          const cacheData = {
+            ticket: transformedTicket,
+            comments: existingComments
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+          localStorage.setItem(`${cacheKey}-timestamp`, now.toString());
+        } else {
+          console.log('❌ No matching ticket found for:', ticketId);
+          setTicketError('Ticket not found');
+        }
       } else {
-        setTicketError(result.error || 'Failed to load ticket details');
+        console.log('❌ Failed to fetch tickets list');
+        setTicketError('Failed to load ticket data');
       }
     } catch (error) {
       console.error('❌ Error fetching ticket details:', error);
@@ -529,18 +551,25 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
     try {
       setIsUploadingComment(true);
       
-      // Try the main API first with timeout
+      // Try the simplified API first
       let result;
       try {
-        result = await Promise.race([
-          ApiService.addTicketNote(ticketId, newComment, selectedFiles),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('API timeout')), 10000)
-          )
-        ]);
+        console.log('🔄 Trying simplified addTicketNote...');
+        result = await addTicketNoteSimple(ticketId, newComment, selectedFiles);
+        console.log('📡 Simplified API result:', result);
       } catch (error) {
-        console.log('❌ Main API failed with error:', error);
-        result = { success: false, error: 'API timeout or network error' };
+        console.log('⚠️ Simplified API failed, trying main API...', error);
+        try {
+          result = await Promise.race([
+            ApiService.addTicketNote(ticketId, newComment, selectedFiles),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('API timeout')), 10000)
+            )
+          ]);
+        } catch (fallbackError) {
+          console.log('⚠️ Both APIs failed, using fallback...', fallbackError);
+          result = { success: false, error: 'All APIs failed' };
+        }
       }
       
       // If the main API fails, try a simpler approach
