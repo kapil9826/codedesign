@@ -413,24 +413,14 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
   // File restrictions
   const ALLOWED_FILE_TYPES = [
     'application/pdf',
-    'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'image/jpeg',
     'image/jpg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'text/plain',
-    'application/zip',
-    'application/x-rar-compressed'
+    'image/png'
   ];
   
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
-  const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.txt', '.zip', '.rar'];
+  const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.jpg', '.jpeg', '.png'];
 
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -457,7 +447,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
       }
       
       if (invalidFiles.length > 0) {
-        alert(`Invalid file types: ${invalidFiles.join(', ')}. Allowed types: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT, ZIP, RAR`);
+        alert(`Invalid file types: ${invalidFiles.join(', ')}. Only PDF, DOCX, JPG, and PNG files are allowed.`);
         return;
       }
       
@@ -761,12 +751,12 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
                   ref={fileInputRef}
                   style={{ display: 'none' }}
                   id="file-input"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.txt,.zip,.rar"
+                  accept=".pdf,.docx,.jpg,.jpeg,.png"
                 />
                 <label 
                   htmlFor="file-input" 
                   className="formatting-icon"
-                  title="Attach files (Max 10MB each) - PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT, ZIP, RAR"
+                  title="Attach files (Max 10MB each) - PDF, DOCX, JPG, PNG only"
                 >
                   <CgAttachment />
                 </label>

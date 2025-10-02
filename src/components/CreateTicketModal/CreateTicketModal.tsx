@@ -119,24 +119,14 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
   // Allowed file types and size limit
   const ALLOWED_FILE_TYPES = [
     'application/pdf',
-    'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'image/jpeg',
     'image/jpg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'text/plain',
-    'application/zip',
-    'application/x-rar-compressed'
+    'image/png'
   ];
   
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
-  const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.txt', '.zip', '.rar'];
+  const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.jpg', '.jpeg', '.png'];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only process files from the create ticket file input
@@ -181,7 +171,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
     }
     
     if (invalidFiles.length > 0) {
-      const errorMsg = `Invalid file types: ${invalidFiles.join(', ')}. Allowed types: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT, ZIP, RAR`;
+      const errorMsg = `Invalid file types: ${invalidFiles.join(', ')}. Only PDF, DOCX, JPG, and PNG files are allowed.`;
       setError(errorMsg);
       return;
     }
@@ -423,9 +413,6 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
               <p className="attachment-limit-message">
                 <CgAttachment /> You can upload up to 2 attachments (Max 10MB each)
               </p>
-              <p className="attachment-types-message">
-                Allowed types: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, WEBP, TXT, ZIP, RAR
-              </p>
             </div>
             <div className="form-group">
               <label>Add Files</label>
@@ -436,7 +423,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ onClose }) => {
                 className="file-input"
                 id="create-ticket-file-input"
                 disabled={attachments.length >= 2}
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.txt,.zip,.rar"
+                accept=".pdf,.docx,.jpg,.jpeg,.png"
               />
               <label 
                 htmlFor="create-ticket-file-input" 
