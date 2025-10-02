@@ -302,50 +302,47 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicket
         console.log('❌ API calls failed:', error);
       }
       
-      // Create comment object
-      const newCommentObj: Comment = {
-        id: `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        author: 'You',
-        message: newComment,
-        timestamp: new Date().toISOString(),
-        isAgent: false,
-        attachments: selectedFiles.map((file, index) => ({
-          id: `attachment-${Date.now()}-${index}`,
-          name: file.name,
-          size: `${(file.size / 1024).toFixed(1)}KB`,
-          type: file.type,
-          url: URL.createObjectURL(file)
-        })),
-        apiSuccess: apiSuccess
-      };
-      
-      // Add to state
-      setComments(prev => [...prev, newCommentObj]);
-      
-      // Save to localStorage
-      if (ticketId) {
-        try {
-          const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
-          if (!localComments[ticketId]) {
-            localComments[ticketId] = [];
-          }
-          localComments[ticketId].push(newCommentObj);
-          localStorage.setItem('localComments', JSON.stringify(localComments));
-        } catch (error) {
-          console.error('Could not save comment:', error);
-        }
-      }
-      
       setNewComment('');
       setSelectedFiles([]);
       setShowCommentSuccess(true);
       setTimeout(() => setShowCommentSuccess(false), 3000);
       
       if (!apiSuccess) {
-        console.log('⚠️ Comment saved locally but not synced to API');
+        console.log('⚠️ Comment not added to API, adding locally as fallback');
+        // Only add locally if API failed
+        const newCommentObj: Comment = {
+          id: `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          author: 'You',
+          message: newComment,
+          timestamp: new Date().toISOString(),
+          isAgent: false,
+          attachments: selectedFiles.map((file, index) => ({
+            id: `attachment-${Date.now()}-${index}`,
+            name: file.name,
+            size: `${(file.size / 1024).toFixed(1)}KB`,
+            type: file.type,
+            url: URL.createObjectURL(file)
+          }))
+        };
+        
+        setComments(prev => [...prev, newCommentObj]);
+        
+        // Save to localStorage as fallback
+        if (ticketId) {
+          try {
+            const localComments = JSON.parse(localStorage.getItem('localComments') || '{}');
+            if (!localComments[ticketId]) {
+              localComments[ticketId] = [];
+            }
+            localComments[ticketId].push(newCommentObj);
+            localStorage.setItem('localComments', JSON.stringify(localComments));
+          } catch (error) {
+            console.error('Could not save comment:', error);
+          }
+        }
       }
       
-      // Refresh comments from API to show the new comment immediately
+      // Refresh comments from API to show the new comment immediately (only if API was successful)
       if (apiSuccess) {
         console.log('🔄 Refreshing comments from API...');
         try {
