@@ -722,10 +722,11 @@
   flex-direction: column;
   overflow-y: auto; /* Enable scrolling */
   position: fixed; /* Fixed positioning */
-  bottom: 50px; /* 50px above bottom */
-  left: 20px; /* 20px from left */
-  right: 20px; /* 20px from right */
-  z-index: 1000; /* High z-index to stay on top */
+  bottom: 65px;
+    /* left: 20px; */
+    /* right: 20px; */
+    z-index: 1000;
+    width: 100%;
 }
 .comment-textarea {
   width: 100%;

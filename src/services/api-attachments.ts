@@ -190,3 +190,4 @@ export const addCommentWithAttachments = async (ticketId: string, comment: strin
 
 // Import the simple note function
 import { addTicketNoteSimple } from './api-simple-note';
+

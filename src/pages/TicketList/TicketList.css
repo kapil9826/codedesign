@@ -43,10 +43,11 @@
   border: 1px solid #d1d5db;
  
   background: white;
-  font-size: 8px;
+  font-size: 10px !important;
   color: #374151;
   transition: all 0.2s ease;
-  min-width: 200px;
+  min-width: 177px !important;
+    height: 26px !important;
 }
 
 .search-filter .search-input:hover {

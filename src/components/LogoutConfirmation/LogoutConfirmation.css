@@ -114,14 +114,14 @@
 }
 
 .logout-btn-confirm {
-  background: #20c997;
+  background: rgb(7 95 100);;
   color: white;
-  border: 1px solid #20c997;
+  border: 1px solid #010101;
 }
 
 .logout-btn-confirm:hover {
-  background: #1ba085;
-  border-color: #1ba085;
+  background: rgb(7 95 100);;
+  border-color: rgb(0, 0, 0);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
 }
