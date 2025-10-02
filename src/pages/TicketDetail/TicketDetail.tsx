@@ -1,22 +1,71 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { CgAttachment } from "react-icons/cg";
+import SkeletonLoader from '../../components/SkeletonLoader/SkeletonLoader';
+import CommentLoader from '../../components/CommentLoader/CommentLoader';
+import CommentSuccess from '../../components/CommentSuccess/CommentSuccess';
 import ApiService from '../../services/api';
-import { Ticket, Comment } from '../../types';
+import { addTicketNoteSimple } from '../../services/api-simple-note';
+import { addCommentWithAttachments } from '../../services/api-attachments';
 import './TicketDetail.css';
 
-const TicketDetail: React.FC = () => {
-  const { ticketId } = useParams<{ ticketId: string }>();
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+interface Ticket {
+  id: string;
+  requester: string;
+  issue: string;
+  time: string;
+  badge?: number;
+  status: 'Active' | 'Closed' | 'On-hold' | 'Overdue' | 'Assigned' | 'Suspend';
+  priority: 'Low' | 'Medium' | 'High';
+  priority_name?: string;
+  priority_bg_color?: string;
+  priority_text_color?: string;
+  status_name?: string;
+  status_bg_color?: string;
+  status_text_color?: string;
+}
+
+interface Comment {
+  id: string;
+  author: string;
+  message: string;
+  timestamp: string;
+  isAgent: boolean;
+  avatar?: string;
+  attachments?: Attachment[];
+}
+
+interface Attachment {
+  id: string;
+  name: string;
+  size: string;
+  type: string;
+  url?: string;
+}
+
+interface TicketDetailProps {
+  ticketId: string;
+  onClose: () => void;
+  onTicketChange: (ticketId: string) => void;
+}
+
+const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onClose, onTicketChange }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [newComment, setNewComment] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [ticketLoading, setTicketLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [ticketError, setTicketError] = useState('');
+  const [error, setError] = useState<string>('');
+  const [currentTicket, setCurrentTicket] = useState<any>(null);
+  const [ticketLoading, setTicketLoading] = useState(true);
+  const [ticketError, setTicketError] = useState<string>('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingComment, setIsUploadingComment] = useState(false);
   const [showCommentSuccess, setShowCommentSuccess] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [statuses, setStatuses] = useState<any[]>([]);
+  const [priorities, setPriorities] = useState<any[]>([]);
 
   // Simple fetch tickets
   const fetchTickets = useCallback(async () => {
@@ -37,18 +86,21 @@ const TicketDetail: React.FC = () => {
         if (apiTickets.length > 0) {
           const transformedTickets: Ticket[] = apiTickets.map((ticket: any) => ({
             id: ticket.ticket_number || ticket.id,
-            issue: ticket.title || 'No title',
-            description: ticket.description || 'No description',
-            status: ticket.status_name || 'Active',
-            priority: ticket.priority_name || 'Medium',
-            requester: ticket.user_name || 'Unknown User',
-            createdAt: ticket.created_at || new Date().toISOString(),
+            requester: ticket.user_name || 'Unknown',
+            issue: ticket.title || 'No description',
+            time: ticket.created_at || new Date().toLocaleTimeString(),
+            status: ticket.status_name || ticket.status || 'Null',
+            priority: ticket.priority_name || ticket.priority || 'Null',
+            priority_name: ticket.priority_name || ticket.priority_name,
+            priority_bg_color: ticket.priority_bg_color,
+            priority_text_color: ticket.priority_text_color,
             status_name: ticket.status_name,
             status_bg_color: ticket.status_bg_color,
             status_text_color: ticket.status_text_color,
-            priority_name: ticket.priority_name,
-            priority_bg_color: ticket.priority_bg_color,
-            priority_text_color: ticket.priority_text_color
+            badge: 0,
+            description: ticket.description || 'No description available',
+            attachments: ticket.documents ? ticket.documents.length : 0,
+            createdAt: ticket.created_at || new Date().toLocaleDateString()
           }));
           setTickets(transformedTickets);
         } else {
@@ -73,7 +125,7 @@ const TicketDetail: React.FC = () => {
       setTicketLoading(true);
       setTicketError('');
       
-      // Find ticket in current list
+      // Find ticket in current list first
       const ticket = tickets.find(t => t.id === ticketId);
       if (ticket) {
         setCurrentTicket(ticket);
@@ -93,14 +145,22 @@ const TicketDetail: React.FC = () => {
         
         const matchingTicket = apiTickets.find((t: any) => t.ticket_number === ticketId || t.id === ticketId);
         if (matchingTicket) {
-          const transformedTicket: Ticket = {
-            id: matchingTicket.ticket_number || matchingTicket.id,
-            issue: matchingTicket.title || 'No title',
-            description: matchingTicket.description || 'No description',
-            status: matchingTicket.status_name || 'Active',
-            priority: matchingTicket.priority_name || 'Medium',
-            requester: matchingTicket.user_name || 'Unknown User',
+          const transformedTicket = {
+            id: matchingTicket.ticket_number || matchingTicket.id || ticketId,
+            title: matchingTicket.title || 'No title',
+            description: matchingTicket.description || 'No description available',
+            status: matchingTicket.status_name || matchingTicket.status || 'Active',
+            priority: matchingTicket.priority_name || matchingTicket.priority || 'Medium',
+            userName: matchingTicket.user_name || 'Unknown User',
+            userEmail: matchingTicket.user_email || 'unknown@example.com',
+            userPhone: matchingTicket.user_phone || 'N/A',
             createdAt: matchingTicket.created_at || new Date().toISOString(),
+            updatedAt: matchingTicket.updated_at || new Date().toISOString(),
+            assignedTo: matchingTicket.assigned_to || 'Unassigned',
+            department: matchingTicket.department || 'General',
+            category: matchingTicket.category || 'General',
+            documents: matchingTicket.documents || [],
+            notes: matchingTicket.notes || [],
             status_name: matchingTicket.status_name,
             status_bg_color: matchingTicket.status_bg_color,
             status_text_color: matchingTicket.status_text_color,
@@ -210,6 +270,56 @@ const TicketDetail: React.FC = () => {
     }
   };
 
+  // Remove file
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Memoized status options
+  const statusOptions = useMemo(() => [
+    { value: 'all', label: 'All Status' },
+    ...statuses.map((status: any) => ({
+      value: status.name,
+      label: status.name
+    }))
+  ], [statuses]);
+
+  // Memoized priority options
+  const priorityOptions = useMemo(() => [
+    { value: 'all', label: 'All Priority' },
+    ...priorities.map((priority: any) => ({
+      value: priority.name,
+      label: priority.name
+    }))
+  ], [priorities]);
+
+  // Memoized styling functions
+  const getStatusStyling = useCallback((ticket: any) => {
+    return {
+      backgroundColor: ticket.status_bg_color || '#e2e8f0',
+      color: ticket.status_text_color || '#4a5568'
+    };
+  }, []);
+
+  const getPriorityStyling = useCallback((ticket: any) => {
+    return {
+      backgroundColor: ticket.priority_bg_color || '#e2e8f0',
+      color: ticket.priority_text_color || '#4a5568'
+    };
+  }, []);
+
+  // Memoized filtered tickets
+  const filteredTickets = useMemo(() => {
+    return tickets.filter(ticket => {
+      const matchesSearch = ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           ticket.issue.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           ticket.priority.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || (ticket as any).status_name === statusFilter;
+      const matchesPriority = priorityFilter === 'all' || (ticket as any).priority_name === priorityFilter;
+      return matchesSearch && matchesStatus && matchesPriority;
+    });
+  }, [tickets, searchTerm, statusFilter, priorityFilter]);
+
   // Initial load
   useEffect(() => {
     fetchTickets();
@@ -243,147 +353,404 @@ const TicketDetail: React.FC = () => {
 
   return (
     <div className="ticket-detail-container">
-      <div className="ticket-detail-sidebar">
+      {/* Ticket List Sidebar - Left */}
+      <div className="ticket-list-sidebar">
         <div className="sidebar-header">
-          <h3>Recent Tickets</h3>
+          <button className="back-btn" onClick={onClose}>←</button>
+          <input
+            type="text"
+            placeholder="Search tickets..."
+            className="sidebar-search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        
-        {error && (
-          <div className="sidebar-error">
-            <p>{error}</p>
-            <button onClick={fetchTickets}>Retry</button>
-          </div>
-        )}
-        
+        <div className="sidebar-filter">
+          <select 
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="priority-dropdown"
+          >
+            {priorityOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="sidebar-filter">
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="status-dropdown"
+          >
+            {statusOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="sidebar-tickets">
-          {tickets.map((ticket) => (
-            <div
-              key={ticket.id}
-              className={`sidebar-ticket-item ${currentTicket?.id === ticket.id ? 'active' : ''}`}
-              onClick={() => {
-                setCurrentTicket(ticket);
-                loadComments();
-              }}
+          {loading && (
+            <div className="sidebar-loading">
+              <SkeletonLoader type="sidebar-ticket" count={3} />
+            </div>
+          )}
+          
+          {error && (
+            <div className="sidebar-error">
+              <p>⚠️ {error}</p>
+              <button onClick={fetchTickets}>Retry</button>
+            </div>
+          )}
+          
+          {!loading && !error && filteredTickets.length === 0 && tickets.length > 0 && (
+            <div className="sidebar-no-tickets">
+              <div className="sidebar-no-records-icon">🔍</div>
+              <h4>No records found</h4>
+              <p>No tickets match your current search or filter criteria.</p>
+            </div>
+          )}
+          
+          {!loading && !error && tickets.length === 0 && (
+            <div className="sidebar-no-tickets">
+              <p>No tickets found</p>
+              <button onClick={fetchTickets}>Retry</button>
+            </div>
+          )}
+          
+          {!loading && !error && filteredTickets.map((ticket) => (
+            <div 
+              key={ticket.id} 
+              className={`sidebar-ticket-item ${ticket.id === ticketId ? 'active' : ''}`}
+              onClick={() => onTicketChange(ticket.id)}
             >
+              <div className="sidebar-ticket-id">{ticket.id}</div>
               <div className="sidebar-ticket-issue">{ticket.issue}</div>
-              <div className="sidebar-ticket-meta">
-                <span className={`sidebar-ticket-status ${ticket.status?.toLowerCase()}`}>
-                  {ticket.status}
-                </span>
-                <span className={`sidebar-ticket-priority ${ticket.priority?.toLowerCase()}`}>
-                  {ticket.priority}
-                </span>
+              <div className="sidebar-ticket-badges">
+                <div 
+                  className="sidebar-ticket-priority"
+                  style={getPriorityStyling(ticket)}
+                >
+                  {ticket.priority_name || ticket.priority || 'Null'}
+                </div>
+                <div 
+                  className={`sidebar-ticket-status status-${ticket.status.toLowerCase().replace('-', '')}`}
+                  style={getStatusStyling(ticket)}
+                >
+                  {ticket.status_name || ticket.status || 'Null'}
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="ticket-detail-main">
-        {ticketLoading && <div className="loading">Loading ticket details...</div>}
+      {/* Comments Section - Middle */}
+      <div className="comments-section">
+        <div className="comments-header">
+          <h3>Comments</h3>
+        </div>
+
+        <div className="comments-list">
+          {ticketLoading && comments.length === 0 && (
+            <SkeletonLoader type="comment" count={2} />
+          )}
+          {!ticketLoading && comments.length === 0 && (
+            <div className="no-comments">
+              <p>No comments yet. Be the first to add a comment!</p>
+            </div>
+          )}
+          {isUploadingComment && (
+            <CommentLoader message="Adding your comment..." />
+          )}
+          {showCommentSuccess && (
+            <CommentSuccess onComplete={() => setShowCommentSuccess(false)} />
+          )}
+          {comments.map((comment) => (
+            <div key={comment.id} className="comment-item">
+              <div className="comment-avatar">
+                {comment.author.charAt(0).toUpperCase()}
+              </div>
+              <div className="comment-bubble">
+                <div className="comment-header">
+                  <div className="comment-author">{comment.author}</div>
+                  <div className="comment-timestamp">
+                    {new Date(comment.timestamp).toLocaleTimeString([], { 
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
+                  </div>
+                </div>
+                <div className="comment-message">{comment.message}</div>
+                {comment.attachments && comment.attachments.length > 0 && (
+                  <div className="comment-attachments">
+                    {comment.attachments.map((attachment) => (
+                      <div key={attachment.id} className="attachment-item">
+                        <span className="attachment-icon"><CgAttachment /></span>
+                        <div className="attachment-content">
+                          {attachment.url ? (
+                            <a 
+                              href={attachment.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="attachment-link"
+                            >
+                              {attachment.name}
+                            </a>
+                          ) : (
+                            <span className="attachment-name">{attachment.name}</span>
+                          )}
+                          <span className="attachment-size">
+                            {attachment.url ? '(Click to view)' : '(No link available)'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="add-comment-section">
+          <h4>Add Comment</h4>
+          {selectedFiles.length > 0 && (
+            <div className="selected-files">
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="selected-file">
+                  <span className="file-icon"><CgAttachment /></span>
+                  <span className="file-name">{file.name}</span>
+                  <span className="file-size">({(file.size / 1024 / 1024).toFixed(1)}MB)</span>
+                  <button 
+                    className="remove-file-btn"
+                    onClick={() => removeFile(index)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className={`comment-form ${isUploadingComment ? 'loading' : ''}`}>
+            <textarea
+              placeholder="Write your comment here..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="comment-textarea"
+              rows={1}
+              data-gramm="false"
+              data-gramm_editor="false"
+              data-enable-grammarly="false"
+            />
+            <div className="comment-actions">
+              <div className="formatting-icons">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileSelect}
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  id="file-input"
+                  accept="*/*"
+                />
+                <label 
+                  htmlFor="file-input" 
+                  className="formatting-icon"
+                  title="Attach files"
+                >
+                  <CgAttachment />
+                </label>
+              </div>
+              <button 
+                className="add-comment-btn" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleAddComment();
+                }}
+                type="button"
+                disabled={isUploadingComment}
+                title="Send comment"
+                style={{
+                  backgroundColor: 'rgb(3, 92, 98)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  cursor: isUploadingComment ? 'not-allowed' : 'pointer',
+                  opacity: isUploadingComment ? 0.6 : 1,
+                  transition: 'all 0.2s ease',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isUploadingComment) {
+                    e.currentTarget.style.backgroundColor = 'rgb(2, 70, 75)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isUploadingComment) {
+                    e.currentTarget.style.backgroundColor = 'rgb(3, 92, 98)';
+                  }
+                }}
+              >
+                →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ticket Details Section - Right Side */}
+      <div className="ticket-detail-section">
+        {ticketLoading && (
+          <div className="ticket-loading">
+            <SkeletonLoader type="ticket-detail" count={1} />
+          </div>
+        )}
         
         {ticketError && (
           <div className="ticket-error">
             <p>⚠️ {ticketError}</p>
-            <button onClick={() => fetchTicketDetails(ticketId!)}>Retry</button>
+            <button 
+              className="retry-btn" 
+              onClick={() => fetchTicketDetails(ticketId)}
+            >
+              Retry
+            </button>
           </div>
         )}
         
-        {currentTicket && (
+        {!ticketLoading && !ticketError && currentTicket && (
           <>
             <div className="ticket-header">
-              <h1>{currentTicket.issue}</h1>
-              <div className="ticket-meta">
-                <span className={`ticket-status ${currentTicket.status?.toLowerCase()}`}>
-                  {currentTicket.status}
-                </span>
-                <span className={`ticket-priority ${currentTicket.priority?.toLowerCase()}`}>
-                  {currentTicket.priority}
-                </span>
+              <div className="ticket-id">#{currentTicket.id}</div>
+              <div className="ticket-header-actions">
+                <button className="close-btn" onClick={onClose}>×</button>
               </div>
             </div>
+            
+            <h1 className="ticket-title">{currentTicket.title}</h1>
             
             <div className="ticket-description">
-              <h3>Description</h3>
               <p>{currentTicket.description}</p>
             </div>
+
+            <div className="ticket-meta">
+              <div className="meta-item">
+                <span className="meta-label"> Name</span>
+                <span className="meta-value">{currentTicket.userName || 'Unknown User'}</span>
+              </div>
+              
+              <div className="meta-item">
+                <span className="meta-label"> Email</span>
+                <span className="meta-value">{currentTicket.userEmail || 'No email'}</span>
+              </div>
             
-            <div className="ticket-comments">
-              <h3>Comments</h3>
-              
-              {showCommentSuccess && (
-                <div className="comment-success">
-                  ✅ Comment added successfully!
-                </div>
-              )}
-              
-              <div className="add-comment">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Add a comment..."
-                  rows={3}
-                />
-                
-                <div className="comment-actions">
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileSelect}
-                    style={{ display: 'none' }}
-                    id="file-input"
-                  />
-                  <label htmlFor="file-input" className="file-input-label">
-                    📎 Attach Files
-                  </label>
-                  
-                  <button
-                    onClick={handleAddComment}
-                    disabled={isUploadingComment}
+              <div className="meta-item">
+                <span className="meta-label">Status</span>
+                <div className="status-container">
+                  <span 
+                    className="status-text"
                     style={{
-                      backgroundColor: 'rgb(3, 92, 98)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px 12px',
-                      cursor: isUploadingComment ? 'not-allowed' : 'pointer',
-                      opacity: isUploadingComment ? 0.6 : 1
+                      ...getStatusStyling(currentTicket),
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.55rem',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
                     }}
                   >
-                    {isUploadingComment ? 'Adding...' : '→'}
-                  </button>
+                    {currentTicket.status_name || currentTicket.status}
+                  </span>
                 </div>
               </div>
               
-              <div className="comments-list">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="comment-item">
-                    <div className="comment-header">
-                      <span className="comment-author">{comment.author}</span>
-                      <span className="comment-time">
-                        {new Date(comment.timestamp).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="comment-message">{comment.message}</div>
-                    {comment.attachments && comment.attachments.length > 0 && (
-                      <div className="comment-attachments">
-                        {comment.attachments.map((attachment) => (
-                          <a
-                            key={attachment.id}
-                            href={attachment.url}
-                            target="_blank"
+              <div className="meta-item">
+                <span className="meta-label">Priority</span>
+                <div className="priority-container">
+                  <span 
+                    className="priority-text"
+                    style={{
+                      ...getPriorityStyling(currentTicket),
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      fontSize: '0.55rem',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    {currentTicket.priority_name || currentTicket.priority}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="meta-item">
+                <span className="meta-label">Created</span>
+                <span className="meta-value">
+                  {new Date(currentTicket.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              
+              <div className="meta-item">
+                <span className="meta-label">Last Action</span>
+                <span className="meta-value">
+                  {new Date(currentTicket.updatedAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+
+            {/* Attachments Section */}
+            <div className="ticket-attachments">
+              <h3>Attachments ({currentTicket.documents ? currentTicket.documents.length : 0})</h3>
+              {currentTicket.documents && currentTicket.documents.length > 0 ? (
+                <div className="attachments-list">
+                  {currentTicket.documents.map((docUrl: string, index: number) => {
+                    const getFileNameFromUrl = (url: string) => {
+                      try {
+                        const urlPath = new URL(url).pathname;
+                        const fileName = urlPath.split('/').pop() || '';
+                        const cleanFileName = fileName.replace(/^\d+_/, '');
+                        return cleanFileName || `Attachment ${index + 1}`;
+                      } catch (error) {
+                        return `Attachment ${index + 1}`;
+                      }
+                    };
+
+                    const fileName = getFileNameFromUrl(docUrl);
+
+                    return (
+                      <div key={index} className="attachment-item">
+                        <span className="attachment-icon"><CgAttachment /></span>
+                        <div className="attachment-content">
+                          <a 
+                            href={docUrl} 
+                            target="_blank" 
                             rel="noopener noreferrer"
                             className="attachment-link"
                           >
-                            📎 {attachment.name}
+                            {fileName}
                           </a>
-                        ))}
+                          <span className="attachment-size">
+                            (Click to view)
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="no-attachments">
+                  <p>No attachments found for this ticket.</p>
+                </div>
+              )}
             </div>
           </>
         )}
